@@ -39,36 +39,6 @@
                 $controllerObject = new UserController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
-            case 'combos':
-                require_once( './Controllers/ComboController.php' );
-                $controllerObject = new ComboController( $requestMethod, $resourceId, $queryString, $requestBody );
-                $apiResponse = $controllerObject->processRequest();
-                break;
-            case 'goods':
-                require_once( './Controllers/GoodController.php' );
-                $controllerObject = new GoodController( $requestMethod, $resourceId, $queryString, $requestBody );
-                $apiResponse = $controllerObject->processRequest();
-                break;
-            case 'goods-categories':
-                require_once( './Controllers/GoodCategoryController.php' );
-                $controllerObject = new GoodCategoryController( $requestMethod, $resourceId, $queryString, $requestBody );
-                $apiResponse = $controllerObject->processRequest();
-                break;
-            case 'goods-subcategories':
-                require_once( './Controllers/GoodSubCategoryController.php' );
-                $controllerObject = new GoodSubCategoryController( $requestMethod, $resourceId, $queryString, $requestBody );
-                $apiResponse = $controllerObject->processRequest();
-                break;
-            case 'goods-brands':
-                require_once( './Controllers/GoodBrandController.php' );
-                $controllerObject = new GoodBrandController( $requestMethod, $resourceId, $queryString, $requestBody );
-                $apiResponse = $controllerObject->processRequest();
-                break;
-            case 'customers':
-                require_once( './Controllers/CustomerController.php' );
-                $controllerObject = new CustomerController( $requestMethod, $resourceId, $queryString, $requestBody );
-                $apiResponse = $controllerObject->processRequest();
-                break;
             case 'sales':
                 require_once( './Controllers/SaleController.php' );
                 $controllerObject = new SaleController( $requestMethod, $resourceId, $queryString, $requestBody );

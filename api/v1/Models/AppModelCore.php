@@ -38,13 +38,6 @@
                                 'operator'  => 'LIKE',
                                 'value'     => '%'.$value.'%'
                             ];
-                        } else if ($key == 'GoodsNotInCategoryId') {
-                            $SQLCriteria['conditions'][$key] = [
-                                'type'      => 'AND', 
-                                'field'     => 't1.GoodCategoryId', 
-                                'operator'  => '<>',
-                                'value'     => $value
-                            ];
                         } else {
                             $SQLCriteria['conditions'][$key] = [
                                 'type'      => 'AND', 
@@ -72,38 +65,6 @@
             return true;
         }
 
-        // // SPECIAL FUNCTION: Validate criteria ********************************
-        // private function JSON_isValidCriteria($json_criteria) {
-        //     if (NULL != $json_criteria) {
-        //         $array_criteria = json_decode($json_criteria, true);
-        //         if (json_last_error() !== JSON_ERROR_NONE) {
-        //             $this->response['msj'] = '['.get_class($this).'] JSON decodification error';
-        //             return false; // Return FALSE on bad criteria JSON structure
-        //         };
-                
-        //         if (count($array_criteria) < 1) { // If there isn't at least 1 index on the criteria
-        //             $this->response['msj'] = '['.get_class($this).'] Criteria definition error';
-        //             return false; // Return FALSE on bad criteria definition
-        //         };
-
-        //         if (isset($array_criteria['conditions'])) {
-        //             foreach ($array_criteria['conditions'] AS $identifier => $condition) {
-        //                 $this->SQL_Params[':'.$identifier] = $condition['value'];
-        //                 $this->SQL_Conditions .= ' '.$condition['type'].(isset($condition['begingroup']) ? ' (' : ' ').$condition['field'].' '.$condition['operator'].' :'.$identifier.(isset($condition['finishgroup']) ? ')' : '');
-        //             };
-        //         };
-
-        //         if (isset($array_criteria['order'])) {
-        //             $this->SQL_Order = $array_criteria['order'];
-        //         };
-
-        //         if (isset($array_criteria['limit'])) {
-        //             $this->SQL_Limit = $array_criteria['limit'];
-        //         };
-        //     };
-        //     return true; // If no criteria defined or correctly defined, return TRUE
-        // }
-
         // SPECIAL FUNCTION: Load necesary parameters depending on criteria ***
         protected function DB_loadParameters() {
             if (count($this->SQL_Params) > 0) {
@@ -117,10 +78,12 @@
         protected function DB_loadResponse($className = NULL) {
             $this->response['data'] = []; // Data Array to be included in the response
                 while ($row_array = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC)) {
-                    // Temporal implementation of the Good image **************
-                    if ($className == 'Good')
-                        $row_array['GoodImage'] = 'https://ip20soft.tech/JJ-POS-Backend/assets/images/' . $row_array['GoodId'] . '.png';
-                    // Temporal implementation of the Good image **************
+                    // Temporal implementation of the image *******************
+                    if ($className == 'UserProfile')
+                        $row_array['UserProfileImage'] = 'https://ip20soft.tech/MTI-ProAutismoAPP_SE-PHP/assets/images/userprofiles/' . $row_array['UserProfileId'] . '.png';
+                    if ($className == 'Task')
+                        $row_array['TaskImage'] = 'https://ip20soft.tech/MTI-ProAutismoAPP_SE-PHP/assets/images/tasks/' . $row_array['TaskId'] . '.png';
+                    // Temporal implementation of the image *******************
                     $this->response['data'][] = $row_array;
                 };
             $this->response['count'] = count($this->response['data']); // Row count to be included in the response

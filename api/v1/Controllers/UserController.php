@@ -14,14 +14,6 @@
 
         private $resourceObject = NULL;
 
-        // $result = [
-        //     'requestMethod' => $this->requestMethod,
-        //     'resourceId'    => $this->resourceId,
-        //     'queryString'   => $this->queryString,
-        //     'requestBody'   => $this->requestBody
-        // ];
-        // return $this->debugResponse($result);
-
         public function __construct( $requestMethod, $resourceId, $queryString, $requestBody ) {
             $this->requestMethod = $requestMethod;
             $this->resourceId = $resourceId;
@@ -55,19 +47,22 @@
                         $response = $this->createRecord();
                     break;
                 case 'PUT':
+                    $response = $this->updateRecord();
+                    break;
+                case 'PATCH':
                     if ( NULL !== $this->resourceId ) {
                         if ( 'changePassword' == $this->resourceId )
                             $response = $this->changePassword();
                         else
                             $response = $this->notAcceptableResponse('Incorrect use of resource');
                     } else
-                        $response = $this->updateRecord(); // TODO: PUT Implementation
+                        $response = $this->modifyRecord();
                     break;
                 case 'DELETE':
-                        $response = $this->deleteRecord(); // TODO: DELETE Implementation
+                    $response = $this->deleteRecord(); // TODO: DELETE Implementation
                     break;
                 case 'OPTIONS':
-                        $response = $this->noContentResponse();
+                    $response = $this->noContentResponse();
                     break;
                 default:
                     $response = $this->methodNotAllowedResponse();
@@ -129,11 +124,7 @@
         }
 
         private function getAllRecords() {
-            // TODO: CALL A FUNCTION TO PROCESS THE FULL QUERYSTRING AND BUILD SEARCH CRITERIA
-            $jsonCriteria = NULL;
-
-            $result = $this->resourceObject->getAll($jsonCriteria);
-            
+            $result = $this->resourceObject->getAll($this->queryString);
             if ( $result['count'] < 1 )
                 return $this->notFoundResponse($result);
             else
@@ -158,6 +149,56 @@
                 return $this->unprocessableEntityResponse($result);
             else
                 return $this->okResponse($result);
+        }
+
+        private function updateRecord() {
+            // DEBUG ***********
+            //return $this->debugResponse($this->requestBody);
+            // DEBUG ***********
+            if (!isset($this->requestBody['data']['UserId']) || !isset($this->requestBody['data']['Username']) 
+            || !isset($this->requestBody['data']['UserType']) || !isset($this->requestBody['data']['FirstName']) 
+            || !isset($this->requestBody['data']['LastName']))
+                return $this->notAcceptableResponse('Missing parameters');
+            
+            // Required fields ------------------------------------------------
+            $UserId = $this->requestBody['data']['UserId'];
+            $Username = $this->requestBody['data']['Username'];
+            $UserType = $this->requestBody['data']['UserType'];
+            $FirstName = $this->requestBody['data']['FirstName'];
+            $LastName = $this->requestBody['data']['LastName'];
+            // Optional fields ------------------------------------------------
+            $Email = isset($this->requestBody['data']['Email']) ? $this->requestBody['data']['Email'] : NULL;
+            $PhoneNumber = isset($this->requestBody['data']['PhoneNumber']) ? $this->requestBody['data']['PhoneNumber'] : NULL;
+
+            $result = $this->resourceObject->updateUser( $UserId, $Username, $UserType, $Email, $PhoneNumber, $FirstName, $LastName );
+
+            if ( $result['count'] < 1 ) {
+                return $this->unprocessableEntityResponse($result);
+            } else {
+               return $this->okResponse($result);
+            };
+        }
+
+        private function modifyRecord() {
+            // DEBUG ***********
+            //return $this->debugResponse($this->requestBody);
+            // DEBUG ***********
+            if (!isset($this->requestBody['data']['UserId']) || !isset($this->requestBody['data']['Action']))
+                return $this->notAcceptableResponse('Missing parameters');
+            
+            // Required fields ------------------------------------------------
+            $UserId = $this->requestBody['data']['UserId'];
+
+            if ( $this->requestBody['data']['Action'] == 'Deactivate' )
+                $result = $this->resourceObject->deactivateUser($UserId);
+            else
+                $result = $this->resourceObject->reactivateUser($UserId);
+            
+            if ( $result['count'] < 1 ) {
+                return $this->unprocessableEntityResponse($result);
+            } else {
+                return $this->okResponse($result);
+            };
         }
     }
 ?>

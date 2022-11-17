@@ -1,20 +1,14 @@
 <?php
     require_once( './System/Database.php' );
+    require_once( './Models/AppModelCore.php' );
 
-    class User {
-        // DataBase properties
-        private $DB_Connector = NULL;
-        private $SQL_Tables = 'tblUsers';
-        private $SQL_Conditions = 'TRUE';
-        private $SQL_Order = 'UserId';
-        private $SQL_Limit = NULL;
-        private $SQL_Params = [];
-        private $SQL_Sentence = NULL;
+    class User extends AppModelCore {
 
         // Class properties
         public $UserId;
         public $Username;
         public $Password;
+        public $UserType;
         public $Email;
         public $PhoneNumber;
         public $FirstName;
@@ -23,12 +17,8 @@
         public $TokenExpiryDateTime;
         public $UserStatus;
 
-        // Response Array *****************************************************
-        private $response = [
-            'count' => -1, 
-            'data' => NULL, 
-            'msj' => NULL
-        ]; // Always return an Array, even on ERROR ***************************
+        // Search criteria fields string
+        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(Username,""),"|",COALESCE(Email,""),"|",COALESCE(PhoneNumber,""),"|",COALESCE(FirstName,""),"|",COALESCE(LastName,""))';
 
         // User contructor (DB Connection)
         public function __construct() {
@@ -44,72 +34,23 @@
             $this->SQL_Params = [];
             $this->SQL_Sentence = NULL;
             
+            $this->response['globalCount'] = -1;
             $this->response['count'] = -1;
             $this->response['data'] = NULL;
-        }
-
-        // SPECIAL FUNCTION: Validate criteria ********************************
-        private function JSON_isValidCriteria($json_criteria) {
-            if (NULL != $json_criteria) {
-                $array_criteria = json_decode($json_criteria, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    $this->response['msj'] = '['.get_class($this).'] JSON decodification error';
-                    return false; // Return FALSE on bad criteria JSON structure
-                };
-                
-                if (count($array_criteria) < 1) { // If there isn't at least 1 index on the criteria
-                    $this->response['msj'] = '['.get_class($this).'] Criteria definition error';
-                    return false; // Return FALSE on bad criteria definition
-                };
-
-                if (isset($array_criteria['conditions'])) {
-                    foreach ($array_criteria['conditions'] AS $identifier => $condition) {
-                        $this->SQL_Params[':'.$identifier] = $condition['value'];
-                        $this->SQL_Conditions .= ' '.$condition['type'].(isset($condition['begingroup']) ? ' (' : ' ').$condition['field'].' '.$condition['operator'].' :'.$identifier.(isset($condition['finishgroup']) ? ')' : '');
-                    };
-                };
-
-                if (isset($array_criteria['order'])) {
-                    $this->SQL_Order = $array_criteria['order'];
-                };
-
-                if (isset($array_criteria['limit'])) {
-                    $this->SQL_Limit = $array_criteria['limit'];
-                };
-            };
-            return true; // If no criteria defined or correctly defined, return TRUE
-        }
-
-        // SPECIAL FUNCTION: Load necesary parameters depending on criteria ***
-        private function DB_loadParameters() {
-            if (count($this->SQL_Params) > 0) {
-                foreach ($this->SQL_Params AS $identifier => &$value) {
-                    $this->SQL_Sentence->bindParam($identifier, $value, PDO::PARAM_STR);
-                };
-            };
-        }
-
-        // SPECIAL FUNCTION: Load response to be returned to the controller ***
-        private function DB_loadResponse() {
-            $this->response['data'] = []; // Data Array to be included in the response
-                while ($row_array = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC)) {
-                    $this->response['data'][] = $row_array;
-                };
-            $this->response['count'] = count($this->response['data']); // Row count to be included in the response
         }
 
         // Function that gets all rows in the Database
         // If criteria was defined, it filters the result
         public function getAll($json_criteria = NULL) {
             $this->DB_initProperties();
-            if (!$this->JSON_isValidCriteria($json_criteria))
-                return $this->response; // Return criteria error
+            if (!$this->buildSQLCriteria( $queryString, $this->SearchCriteriaFieldsString ))
+                 return $this->response; // Return SQL criteria error
             
             try {
-                $SQL_Query = 'SELECT 
+                $SQL_GlobalQuery = 'SELECT 
                     UserId, 
                     Username, 
-                    Password, 
+                    UserType, 
                     Email, 
                     PhoneNumber, 
                     FirstName, 
@@ -120,8 +61,8 @@
                     ' WHERE '
                     .$this->SQL_Conditions.
                     ' ORDER BY '
-                    .$this->SQL_Order.
-                    (!is_null($this->SQL_Limit) ? ' LIMIT '.$this->SQL_Limit.';' : ';');
+                    .$this->SQL_Order;
+                $SQL_Query = $SQL_GlobalQuery . (!is_null($this->SQL_Limit) ? ' LIMIT '.$this->SQL_Limit.';' : ';');
                 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
                 $this->DB_loadParameters();
@@ -132,7 +73,8 @@
                     return $this->response; // Returns response with no records
                 };
 
-                $this->DB_loadResponse(); // If records found, build response Array with DB info
+                $this->DB_loadResponse(get_class($this)); // If records found, build response Array with DB info
+                $this->DB_getGlobalCount($SQL_GlobalQuery); // Get global count of rows ignoring LIMIT
                 return $this->response; // Return response with records
             }
             catch (PDOException $ex) {
@@ -171,6 +113,7 @@
                         UserId, 
                         Username, 
                         Password, 
+                        UserType, 
                         Email, 
                         PhoneNumber, 
                         FirstName, 
@@ -197,6 +140,7 @@
                 $this->response['data'][$UserId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
                 $this->updateProperties($this->response['data'][$UserId]);
                 $this->response['count'] = 1; // Unique record
+                $this->response['globalCount'] = 1;
                 // ------------------------------------------------------------
 
                 return $this->response; // Return Array response
@@ -214,10 +158,20 @@
         public function createUser( $Username, $Password, $Email, $PhoneNumber, $FirstName, $LastName ) {
             $this->DB_initProperties();
             $UserId = NULL; // NULL by default on new records
+            $UserType = 1; // Regular User by default on new records
             $Token = NULL; // NULL by default on new records
             $TokenExpiryDateTime = NULL; // NULL by default on new records
             $UserStatus = 1; // 1(Active) by default on new records
-        
+            
+            ## TODO: VALIDATION INSTRUCTIONS FOR PARAMETERS -------------------
+            ## ... 
+            // Meanwhile ......
+            if (empty($Username) || empty($Password) || empty($FirstName) || empty($LastName)) {
+                $this->response['error'] = '['.get_class($this).'] Error: Main fields cannot be empty';
+                return $this->response;
+            };
+            ## TODO: VALIDATION INSTRUCTIONS FOR PARAMETERS -------------------
+
             #######################################################################
             ####################### PASSWORD HASHING BLOCK ########################
             #######################################################################
@@ -229,6 +183,7 @@
                     :UserId, 
                     :Username, 
                     :HashedPassword, 
+                    :UserType, 
                     :Email, 
                     :PhoneNumber, 
                     :FirstName, 
@@ -241,6 +196,7 @@
                 $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
                 $this->SQL_Sentence->bindParam(':Username', $Username, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':HashedPassword', $HashedPassword, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':UserType', $UserType, PDO::PARAM_INT);
                 $this->SQL_Sentence->bindParam(':Email', $Email, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':PhoneNumber', $PhoneNumber, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':FirstName', $FirstName, PDO::PARAM_STR);
@@ -253,7 +209,7 @@
                 if ($this->SQL_Sentence->rowCount() != 0) {
                     $UserId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
                     $this->response['count'] = 1;
-                    $this->response['data'] = ['id' => $UserId];
+                    $this->response['data'] = ['Id' => $UserId];
                     $this->response['msj'] = '['.get_class($this).'] Ok: New record created successfully';
                 }
                 else {
@@ -270,12 +226,15 @@
         // ********************************************************************
         // (UPDATE) UPDATE RECORD ON DB ***************************************
         // ********************************************************************
-        public function updateUser( $UserId, $Username, $Email, $PhoneNumber, $FirstName, $LastName ) {
+        public function updateUser( $UserId, $Username, $UserType, $Email, $PhoneNumber, $FirstName, $LastName ) {
             $this->getUser($UserId); // Get current record data from DB
 
             // Confirm changes on at least 1 field ----------------------------
-            if ($this->Username == $Username && $this->Email == $Email && $this->PhoneNumber == $PhoneNumber 
+            if ($this->Username == $Username && $this->UserType == $UserType 
+            && $this->Email == $Email && $this->PhoneNumber == $PhoneNumber 
             && $this->FirstName == $FirstName && $this->LastName == $LastName) {
+                $this->response['count'] = -1;
+                $this->response['data'] = ['Id' => $UserId];
                 $this->response['msj'] = '['.get_class($this).'] Warning: No modifications made on record';
                 return $this->response; // Return 'no modification' response
             };
@@ -284,6 +243,7 @@
             try {
                 $SQL_Query = 'UPDATE tblUsers SET 
                   Username = :Username, 
+                  UserType = :UserType, 
                   Email = :Email, 
                   PhoneNumber = :PhoneNumber, 
                   FirstName = :FirstName, 
@@ -293,6 +253,7 @@
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
                 $this->SQL_Sentence->bindParam(':Username', $Username, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':UserType', $UserType, PDO::PARAM_INT);
                 $this->SQL_Sentence->bindParam(':Email', $Email, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':PhoneNumber', $PhoneNumber, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':FirstName', $FirstName, PDO::PARAM_STR);
@@ -301,8 +262,8 @@
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
+                    $this->getUser( $UserId ); // Update current object data with modified info
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record updated successfully';
-                    $this->getUser($UserId); // Update current object data with modified info
                 }
                 else {
                     $this->response['msj'] = '['.get_class($this).'] Error: Cannot update record';
@@ -312,6 +273,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $UserId];
             return $this->response; // Return response Array
         }
 
@@ -334,8 +296,8 @@
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
+                    $this->getUser( $UserId ); // Update current object data after reactivation
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record reactivated successfully';
-                    $this->getUser($UserId); // Update current object data after reactivation
                 }
                 else {
                     $this->response['msj'] = '['.get_class($this).'] Error: Cannot reactivate record';
@@ -345,6 +307,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $UserId];
             return $this->response; // Return response Array
         }
 
@@ -367,8 +330,8 @@
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
+                    $this->getUser( $UserId ); // Update current object data after deactivation
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record deactivated successfully';
-                    $this->getUser($UserId); // Update current object data after deactivation
                 }
                 else {
                     $this->response['msj'] = '['.get_class($this).'] Error: Cannot deactivate record';
@@ -378,6 +341,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $UserId];
             return $this->response; // Return response Array
         }
 
@@ -385,8 +349,8 @@
         ################### LOGIN/LOGOUT/SIGNIN FUNCTIONS #####################
         #######################################################################
         private function verifyTokenExpiryDateTime () {
-            $TokenExpiryDateTime = new DateTime($this->TokenExpiryDateTime);
-            $CurrentDateTime = new DateTime(date('Y-m-d H:i:s'));
+            $TokenExpiryDateTime = new DateTime( $this->TokenExpiryDateTime );
+            $CurrentDateTime = new DateTime( date('Y-m-d H:i:s') );
             $TimeDifference = $CurrentDateTime->diff($TokenExpiryDateTime);
             // DEBUG ZONE ##################################################
             $this->response['exp'] = $TokenExpiryDateTime;
@@ -408,8 +372,8 @@
         }
 
         public function isValidToken ( $UserId, $Token ) {
-            $this->getUser($UserId); // Get current record data from DB
-            if ( $this->Token == $Token && !empty($Token) ) {
+            $this->getUser( $UserId ); // Get current record data from DB
+            if ( $this->Token == $Token && !empty( $Token ) ) {
                 if ( $this->verifyTokenExpiryDateTime() ) {
                     $this->response['count'] = 1;
                     $this->response['data'] = ['id' => $UserId];
@@ -458,8 +422,8 @@
         }
 
         private function tokenGeneration( $Minutes = 120 ) {
-            $Secret = 'JJ-POS';
-            $Issuer = 'IP20';
+            $Secret = 'MTI-ProAutismoAPP';
+            $Issuer = 'MTI-2022-2';
             $ExpiryDateTime = new DateTime(); // DateTimeObject for Token expiration
             $ExpiryDateTime->add(new DateInterval('PT'.$Minutes.'M')); // Add X minutes for expiration
             
@@ -614,7 +578,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Warning: No changes made in password';
                 $this->response['error'] = 'The entered password is the same as the one stored into the DB';
                 return $this->response; // Return response Array
-            }
+            };
 
             try {
                 $SQL_Query = 'UPDATE tblUsers 
