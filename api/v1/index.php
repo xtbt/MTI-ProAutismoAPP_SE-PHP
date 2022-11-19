@@ -39,9 +39,9 @@
                 $controllerObject = new UserController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
-            case 'sales':
-                require_once( './Controllers/SaleController.php' );
-                $controllerObject = new SaleController( $requestMethod, $resourceId, $queryString, $requestBody );
+            case 'users-profiles':
+                require_once( './Controllers/UserProfileController.php' );
+                $controllerObject = new UserProfileController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
             default:

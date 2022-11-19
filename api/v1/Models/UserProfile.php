@@ -2,34 +2,30 @@
     require_once( './System/Database.php' );
     require_once( './Models/AppModelCore.php' );
 
-    class User extends AppModelCore {
+    class UserProfile extends AppModelCore {
 
         // Class properties
+        public $UserProfileId;
         public $UserId;
-        public $Username;
-        public $Password;
-        public $UserType;
-        public $Email;
-        public $PhoneNumber;
         public $FirstName;
         public $LastName;
         public $Token;
         public $TokenExpiryDateTime;
-        public $UserStatus;
+        public $UserProfileStatus;
 
         // Search criteria fields string
-        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(Username,""),"|",COALESCE(Email,""),"|",COALESCE(PhoneNumber,""),"|",COALESCE(FirstName,""),"|",COALESCE(LastName,""))';
+        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(FirstName,""),"|",COALESCE(LastName,""))';
 
-        // User contructor (DB Connection)
+        // UserProfile contructor (DB Connection)
         public function __construct() {
             $this->DB_Connector = Database::getInstance()->getConnector(); // Get singleton DB connector
         }
 
         // Init DB properties -------------------------------------------------
         private function DB_initProperties() {
-            $this->SQL_Tables = 'tblUsers';
+            $this->SQL_Tables = 'tblUsersProfiles';
             $this->SQL_Conditions = 'TRUE';
-            $this->SQL_Order = 'UserId';
+            $this->SQL_Order = 'UserProfileId';
             $this->SQL_Limit = NULL;
             $this->SQL_Params = [];
             $this->SQL_Sentence = NULL;
@@ -48,14 +44,11 @@
             
             try {
                 $SQL_GlobalQuery = 'SELECT 
+                    UserProfileId, 
                     UserId, 
-                    Username, 
-                    UserType, 
-                    Email, 
-                    PhoneNumber, 
                     FirstName, 
                     LastName, 
-                    UserStatus 
+                    UserProfileStatus 
                     FROM '
                     .$this->SQL_Tables.
                     ' WHERE '
@@ -88,7 +81,7 @@
         // CRUD FUNCTIONS START ***********************************************
         
         // Update class properties --------------------------------------------
-        private function updateProperties($field_array) {
+        private function updateProperties( $field_array ) {
             foreach ($field_array AS $propertyName => $value) {
                 $this->$propertyName = $value;
             };
@@ -97,10 +90,10 @@
         // ********************************************************************
         // (READ) GET A SINGLE ROW ********************************************
         // ********************************************************************
-        public function getUser( $UserId ) {
+        public function getUserProfile( $UserProfileId ) {
             $this->DB_initProperties();
-            if (is_numeric($UserId)) {
-                $this->SQL_Conditions .= ' AND UserId = :UserId';
+            if ( is_numeric( $UserProfileId ) ) {
+                $this->SQL_Conditions .= ' AND UserProfileId = :UserProfileId';
                 $this->SQL_Limit = '0,1';
             }
             else {
@@ -110,17 +103,13 @@
             
             try {
                 $SQL_Query = 'SELECT 
+                        UserProfileId, 
                         UserId, 
-                        Username, 
-                        Password, 
-                        UserType, 
-                        Email, 
-                        PhoneNumber, 
                         FirstName, 
                         LastName, 
                         Token, 
                         TokenExpiryDateTime, 
-                        UserStatus 
+                        UserProfileStatus 
                         FROM '
                         .$this->SQL_Tables.
                         ' WHERE '
@@ -128,7 +117,7 @@
                         (!is_null($this->SQL_Limit) ? ' LIMIT '.$this->SQL_Limit.';' : ';');
                 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 if ($this->SQL_Sentence->rowCount() < 1) {
                     $this->response['count'] = 0; // No records found
@@ -137,8 +126,8 @@
                 };
 
                 // If there is data, we build the response with DB info -------
-                $this->response['data'][$UserId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
-                $this->updateProperties($this->response['data'][$UserId]);
+                $this->response['data'][$UserProfileId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
+                $this->updateProperties($this->response['data'][$UserProfileId]);
                 $this->response['count'] = 1; // Unique record
                 $this->response['globalCount'] = 1;
                 // ------------------------------------------------------------
@@ -155,62 +144,47 @@
         // ********************************************************************
         // (CREATE) CREATE NEW RECORD INTO DB *********************************
         // ********************************************************************
-        public function createUser( $Username, $Password, $Email, $PhoneNumber, $FirstName, $LastName ) {
+        public function createUserProfile( $UserId, $FirstName, $LastName ) {
             $this->DB_initProperties();
-            $UserId = NULL; // NULL by default on new records
-            $UserType = 1; // Regular User by default on new records
+            $UserProfileId = NULL; // NULL by default on new records
             $Token = NULL; // NULL by default on new records
             $TokenExpiryDateTime = NULL; // NULL by default on new records
-            $UserStatus = 1; // 1(Active) by default on new records
+            $UserProfileStatus = 1; // 1(Active) by default on new records
             
             ## TODO: VALIDATION INSTRUCTIONS FOR PARAMETERS -------------------
             ## ... 
             // Meanwhile ......
-            if (empty($Username) || empty($Password) || empty($FirstName) || empty($LastName)) {
+            if (empty($UserId) || empty($FirstName) || empty($LastName)) {
                 $this->response['error'] = '['.get_class($this).'] Error: Main fields cannot be empty';
                 return $this->response;
             };
             ## TODO: VALIDATION INSTRUCTIONS FOR PARAMETERS -------------------
 
-            #######################################################################
-            ####################### PASSWORD HASHING BLOCK ########################
-            #######################################################################
-            $HashedPassword = password_hash($Password, PASSWORD_DEFAULT);
-            #######################################################################
-
             try {
-                $SQL_Query = 'INSERT INTO tblUsers VALUES (
+                $SQL_Query = 'INSERT INTO tblUsersProfiles VALUES (
+                    :UserProfileId, 
                     :UserId, 
-                    :Username, 
-                    :HashedPassword, 
-                    :UserType, 
-                    :Email, 
-                    :PhoneNumber, 
                     :FirstName, 
                     :LastName, 
                     :Token, 
                     :TokenExpiryDateTime, 
-                    :UserStatus)';
+                    :UserProfileStatus)';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':Username', $Username, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':HashedPassword', $HashedPassword, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':UserType', $UserType, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':Email', $Email, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':PhoneNumber', $PhoneNumber, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':FirstName', $FirstName, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':LastName', $LastName, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':Token', $Token, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':TokenExpiryDateTime', $TokenExpiryDateTime, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':UserStatus', $UserStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileStatus', $UserProfileStatus, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $UserId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
+                    $UserProfileId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
                     $this->response['count'] = 1;
                     $this->response['globalCount'] = 1;
-                    $this->response['data'] = ['Id' => $UserId];
+                    $this->response['data'] = ['Id' => $UserProfileId];
                     $this->response['msj'] = '['.get_class($this).'] Ok: New record created successfully';
                 }
                 else {
@@ -227,44 +201,34 @@
         // ********************************************************************
         // (UPDATE) UPDATE RECORD ON DB ***************************************
         // ********************************************************************
-        public function updateUser( $UserId, $Username, $UserType, $Email, $PhoneNumber, $FirstName, $LastName ) {
-            $this->getUser($UserId); // Get current record data from DB
+        public function updateUserProfile( $UserProfileId, $FirstName, $LastName ) {
+            $this->getUserProfile( $UserProfileId ); // Get current record data from DB
 
             // Confirm changes on at least 1 field ----------------------------
-            if ($this->Username == $Username && $this->UserType == $UserType 
-            && $this->Email == $Email && $this->PhoneNumber == $PhoneNumber 
-            && $this->FirstName == $FirstName && $this->LastName == $LastName) {
+            if ($this->FirstName == $FirstName && $this->LastName == $LastName) {
                 $this->response['count'] = -1;
                 $this->response['globalCount'] = -1;
-                $this->response['data'] = ['Id' => $UserId];
+                $this->response['data'] = ['Id' => $UserProfileId];
                 $this->response['msj'] = '['.get_class($this).'] Warning: No modifications made on record';
                 return $this->response; // Return 'no modification' response
             };
             // ----------------------------------------------------------------
 
             try {
-                $SQL_Query = 'UPDATE tblUsers SET 
-                  Username = :Username, 
-                  UserType = :UserType, 
-                  Email = :Email, 
-                  PhoneNumber = :PhoneNumber, 
+                $SQL_Query = 'UPDATE tblUsersProfiles SET 
                   FirstName = :FirstName, 
                   LastName = :LastName 
                   WHERE 
-                  UserId = :UserId';
+                  UserProfileId = :UserProfileId';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':Username', $Username, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':UserType', $UserType, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':Email', $Email, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':PhoneNumber', $PhoneNumber, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':FirstName', $FirstName, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':LastName', $LastName, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->getUser( $UserId ); // Update current object data with modified info
+                    $this->getUserProfile( $UserProfileId ); // Update current object data with modified info
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record updated successfully';
                 }
                 else {
@@ -275,30 +239,30 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
-            $this->response['data'] = ['Id' => $UserId];
+            $this->response['data'] = ['Id' => $UserProfileId];
             return $this->response; // Return response Array
         }
 
         // ********************************************************************
         // (REACTIVATE) REACTIVATE RECORD ON DB *******************************
         // ********************************************************************
-        public function reactivateUser( $UserId ) {
-            $this->getUser($UserId); // Get current record data from DB
-            $UserStatus = 1; // Default active status (1)
+        public function reactivateUserProfile( $UserProfileId ) {
+            $this->getUserProfile($UserProfileId); // Get current record data from DB
+            $UserProfileStatus = 1; // Default active status (1)
 
             try {
-                $SQL_Query = 'UPDATE tblUsers SET 
-                    UserStatus = :UserStatus 
+                $SQL_Query = 'UPDATE tblUsersProfiles SET 
+                    UserProfileStatus = :UserProfileStatus 
                     WHERE 
-                    UserId = :UserId';
+                    UserProfileId = :UserProfileId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':UserStatus', $UserStatus, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileStatus', $UserProfileStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->getUser( $UserId ); // Update current object data after reactivation
+                    $this->getUserProfile( $UserProfileId ); // Update current object data after reactivation
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record reactivated successfully';
                 }
                 else {
@@ -309,30 +273,30 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
-            $this->response['data'] = ['Id' => $UserId];
+            $this->response['data'] = ['Id' => $UserProfileId];
             return $this->response; // Return response Array
         }
 
         // ********************************************************************
         // (DEACTIVATE) DEACTIVATE RECORD ON DB *******************************
         // ********************************************************************
-        public function deactivateUser( $UserId ) {
-            $this->getUser($UserId); // Get current record data from DB
-            $UserStatus = 0; // Default inactive status (0)
+        public function deactivateUserProfile( $UserProfileId ) {
+            $this->getUserProfile($UserProfileId); // Get current record data from DB
+            $UserProfileStatus = 0; // Default inactive status (0)
 
             try {
-                $SQL_Query = 'UPDATE tblUsers SET 
-                    UserStatus = :UserStatus 
+                $SQL_Query = 'UPDATE tblUsersProfiles SET 
+                    UserProfileStatus = :UserProfileStatus 
                     WHERE 
-                    UserId = :UserId';
+                    UserProfileId = :UserProfileId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':UserStatus', $UserStatus, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileStatus', $UserProfileStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->getUser( $UserId ); // Update current object data after deactivation
+                    $this->getUserProfile( $UserProfileId ); // Update current object data after deactivation
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record deactivated successfully';
                 }
                 else {
@@ -343,7 +307,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
-            $this->response['data'] = ['Id' => $UserId];
+            $this->response['data'] = ['Id' => $UserProfileId];
             return $this->response; // Return response Array
         }
 
@@ -362,10 +326,10 @@
             if ($CurrentDateTime < $TokenExpiryDateTime) {
                 if ($TimeDifference->i <= 10) {
                     if ( $this->tokenGeneration(20) ) {
-                        $this->response['info'] = 'The user Token has been renewed';
+                        $this->response['info'] = 'The user profile Token has been renewed';
                         $this->response['newToken'] = $this->Token;
                     } else {
-                        $this->response['info'] = 'The user Token could not be renewed';
+                        $this->response['info'] = 'The user profile Token could not be renewed';
                     }
                 };
                 return true;
@@ -373,25 +337,25 @@
             return false;
         }
 
-        public function isValidToken ( $UserId, $Token ) {
-            $this->getUser( $UserId ); // Get current record data from DB
+        public function isValidToken ( $UserProfileId, $Token ) {
+            $this->getUserProfile( $UserProfileId ); // Get current record data from DB
             if ( $this->Token == $Token && !empty( $Token ) ) {
                 if ( $this->verifyTokenExpiryDateTime() ) {
                     $this->response['count'] = 1;
                     $this->response['globalCount'] = 1;
-                    $this->response['data'] = ['Id' => $UserId];
+                    $this->response['data'] = ['Id' => $UserProfileId];
                     $this->response['msj'] = '['.get_class($this).'] OK: Token is valid';
                 } else {
                     $this->response['count'] = -1;
                     $this->response['globalCount'] = -1;
-                    $this->response['data'] = ['Id' => $UserId];
+                    $this->response['data'] = ['Id' => $UserProfileId];
                     $this->response['msj'] = '['.get_class($this).'] Error: Token Expired, please login again';
                     $this->response['error'] = 'The Token used for this transaction is expired.';
                 };
             } else {
                 $this->response['count'] = -1;
                 $this->response['globalCount'] = -1;
-                $this->response['data'] = ['Id' => $UserId];
+                $this->response['data'] = ['Id' => $UserProfileId];
                 $this->response['msj'] = '['.get_class($this).'] Error: Invalid Token';
                 $this->response['error'] = 'The provided Token is invalid.';
             };
@@ -400,16 +364,16 @@
 
         private function updateToken( $JWT, $TokenExpiryDateTime ) {
             try {
-                $SQL_Query = 'UPDATE tblUsers SET 
+                $SQL_Query = 'UPDATE tblUsersProfiles SET 
                   Token = :Token,
                   TokenExpiryDateTime = :TokenExpiryDateTime 
                   WHERE 
-                  UserId = :UserId';
+                  UserProfileId = :UserProfileId';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
                 $this->SQL_Sentence->bindParam(':Token', $JWT, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':TokenExpiryDateTime', $TokenExpiryDateTime, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':UserId', $this->UserId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $this->UserProfileId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
@@ -442,7 +406,7 @@
             $payload = json_encode([
                 'iss' => $Issuer, 
                 'exp' => $ExpiryDateTime->format('YmdHis'), 
-                'jti' => $this->UserId
+                'jti' => $this->UserProfileId
             ]);
 
             // Encode Header to Base64Url String
@@ -463,49 +427,49 @@
             return $this->updateToken($JWT, $ExpiryDateTime->format('Y-m-d H:i:s')); // Updates the token in Database
         }
 
-        public function login( $Username, $Password ) {
+        public function login( $UserProfileId ) {
             try {
-                // Step 1: Username verification ******************
-                $SQL_Query = 'SELECT 
-                    UserId 
-                    FROM 
-                    tblUsers 
-                    WHERE 
-                    Username = :Username';
+                // Step 1: UserProfileId verification (NOT NECESSARY) *********
+                // $SQL_Query = 'SELECT 
+                //     UserProfileId 
+                //     FROM 
+                //     tblUsersProfiles 
+                //     WHERE 
+                //     UserProfileId = :UserProfileId';
 
-                $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':Username', $Username, PDO::PARAM_STR);
-                $this->SQL_Sentence->execute();
+                // $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
+                // $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_STR);
+                // $this->SQL_Sentence->execute();
                 
-                if ($this->SQL_Sentence->rowCount() < 1) {
-                    $this->response['msj'] = '['.get_class($this).'] Error: Username not found';
-                    $this->response['error'] = '['.get_class($this).'] Invalid Username';
-                    return $this->response; // Return response Array
-                };
+                // if ($this->SQL_Sentence->rowCount() < 1) {
+                //     $this->response['msj'] = '['.get_class($this).'] Error: UserProfileId not found';
+                //     $this->response['error'] = '['.get_class($this).'] Invalid UserProfileId';
+                //     return $this->response; // Return response Array
+                // };
                 
                 // If there is data, we get the current DB info -------
-                $row = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
-                $this->getUser($row['UserId']); // Update current object data
+                //$row = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC); // (NOT NECESSARY)
+                $this->getUserProfile( $UserProfileId ); // Update current object data
                 $this->response['count'] = -1; // Restart count property to continue validation
                 $this->response['globalCount'] = -1; // // Restart globalCount property to continue validation
                 $this->response['data'] = NULL; // Restart data property to continue validation
 
-                // Step 2: User Status verification ***********************
-                if ($this->UserStatus < 1) {
-                    $this->response['msj'] = '['.get_class($this).'] Error: User is disabled';
-                    $this->response['error'] = '['.get_class($this).'] The Username is disabled on the Database';
+                // Step 2: UserProfile Status verification ***********************
+                if ( $this->UserProfileStatus < 1 ) {
+                    $this->response['msj'] = '['.get_class($this).'] Error: User profile is disabled';
+                    $this->response['error'] = '['.get_class($this).'] The user profile is disabled on the Database';
                     return $this->response; // Return response Array
                 };
 
-                // Step 3: Password verification ******************************
-                if ( !password_verify($Password, $this->Password) ) {
-                    $this->response['msj'] = '['.get_class($this).'] Error: Invalid password';
-                    $this->response['error'] = '['.get_class($this).'] The submited password is incorrect';
-                    return $this->response; // Return response Array
-                };
+                // // Step 3: Password verification (NOT NECESSARY) ***********
+                // if ( !password_verify($Password, $this->Password) ) {
+                //     $this->response['msj'] = '['.get_class($this).'] Error: Invalid password';
+                //     $this->response['error'] = '['.get_class($this).'] The submited password is incorrect';
+                //     return $this->response; // Return response Array
+                // };
                 
                 // Step 4: Token generation ***********************************
-                if ( !$this->tokenGeneration(120) ) {
+                if ( !$this->tokenGeneration(120 ) ) {
                     $this->response['msj'] = '['.get_class($this).'] Error: Cannot create Token';
                     // We get the error detail from the tokenGeneration::updateToken function
                     return $this->response; // Return response Array
@@ -516,10 +480,10 @@
                     'count'     => 1,
                     'globalCount'     => 1,
                     'data'      => [
-                        'UserId'    => $this->UserId, 
+                        'UserProfileId'    => $this->UserProfileId, 
                         'Token'     => $this->Token
                     ],
-                    'msj'       => '['.get_class($this).'] OK: User logged in successfully'
+                    'msj'       => '['.get_class($this).'] OK: User profile logged in successfully'
                 ];
             }
             catch (PDOException $ex) {
@@ -529,28 +493,28 @@
             };
         }
 
-        public function logoff( $UserId ) {
+        public function logoff( $UserProfileId ) {
             $Token = NULL;
             $TokenExpiryDateTime = NULL;
             try {
                 // Step 1: Destroy Token **************************************
                 $SQL_Query = 'UPDATE 
-                    tblUsers 
+                    tblUsersProfiles 
                     SET 
                     Token = :Token, 
                     TokenExpiryDateTime = :TokenExpiryDateTime 
                     WHERE 
-                    UserId = :UserId';
+                    UserProfileId = :UserProfileId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
                 $this->SQL_Sentence->bindParam(':Token', $Token, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':TokenExpiryDateTime', $TokenExpiryDateTime, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() < 1) {
-                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot logoff user';
-                    $this->response['error'] = '['.get_class($this).'] The user logoff process was interrupted';
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot logoff user profile';
+                    $this->response['error'] = '['.get_class($this).'] The user profile logoff process was interrupted';
                     return $this->response; // Return response Array
                 };
 
@@ -559,10 +523,10 @@
                     'count'     => 1,
                     'globalCount'     => 1,
                     'data'      => [
-                        'UserId'    => $UserId, 
+                        'UserProfileId'    => $UserProfileId, 
                         'Token'     => 'Destroyed'
                     ],
-                    'msj'       => '['.get_class($this).'] OK: The user logoff process was successful'
+                    'msj'       => '['.get_class($this).'] OK: The user profile logoff process was successful'
                 ];
             }
             catch (PDOException $ex) {
@@ -570,51 +534,6 @@
                 $this->response['error'] = $ex->getMessage();
                 return $this->response; // Return response Array
             };
-        }
-
-        #######################################################################
-        ######################### PASSWORD FUNCTIONS ##########################
-        #######################################################################
-        public function updatePassword( $UserId, $NewPassword ) {
-            $this->getUser($UserId); // Get current record data from DB
-        
-            //--------------------- PASSWORD HASHING BLOCK --------------------
-            $NewHashedPassword = password_hash($NewPassword, PASSWORD_DEFAULT);
-            // ----------------------------------------------------------------
-
-            if ($NewHashedPassword == $this->Password) {
-                $this->response['msj'] = '['.get_class($this).'] Warning: No changes made in password';
-                $this->response['error'] = 'The entered password is the same as the one stored into the DB';
-                return $this->response; // Return response Array
-            };
-
-            try {
-                $SQL_Query = 'UPDATE tblUsers 
-                    SET 
-                    Password = :NewHashedPassword 
-                    WHERE 
-                    UserId = :UserId';
-                  
-                $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':UserId', $UserId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':NewHashedPassword', $NewHashedPassword, PDO::PARAM_STR);
-                $this->SQL_Sentence->execute();
-                
-                if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response['count'] = 1;
-                    $this->response['globalCount'] = 1;
-                    $this->response['data'] = ['id' => $UserId];
-                    $this->response['msj'] = '['.get_class($this).'] Ok: The user Password has been updated';
-                }
-                else {
-                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot change user password';
-                };
-            }
-            catch (PDOException $ex) {
-                $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
-                $this->response['error'] = $ex->getMessage();
-            };
-            return $this->response; // Return response
         }
     }
 ?>

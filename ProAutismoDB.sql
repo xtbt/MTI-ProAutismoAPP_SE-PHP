@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 08-11-2022 a las 13:54:01
+-- Tiempo de generación: 18-11-2022 a las 17:07:44
 -- Versión del servidor: 10.4.20-MariaDB
 -- Versión de PHP: 8.0.8
 
@@ -95,6 +95,13 @@ CREATE TABLE `tblUsers` (
   `UserStatus` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Users table';
 
+--
+-- Volcado de datos para la tabla `tblUsers`
+--
+
+INSERT INTO `tblUsers` (`UserId`, `Username`, `Password`, `UserType`, `Email`, `PhoneNumber`, `FirstName`, `LastName`, `Token`, `TokenExpiryDateTime`, `UserStatus`) VALUES
+(1, 'demo', '$2y$10$Day6sq3q9GSul/dKbGrP2upWOGNMgXSmapNzF0ucMAHJih8w.hENm', 1, 'demo@proautismoapp.com', '6641234567', 'Usuario', 'Demostración', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNVEktMjAyMi0yIiwiZXhwIjoiMjAyMjExMTgxNjUyMDUiLCJqdGkiOiIxIn0.kNRp27GfUcPQJbu5wQHQXzgcOGgZlZwehDXQyrsG7q0', '2022-11-18 16:52:05', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -109,8 +116,16 @@ CREATE TABLE `tblUsersProfiles` (
   `LastName` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
   `Token` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
   `TokenExpiryDateTime` datetime DEFAULT NULL,
-  `UserStatus` tinyint(1) UNSIGNED NOT NULL
+  `UserProfileStatus` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Users table';
+
+--
+-- Volcado de datos para la tabla `tblUsersProfiles`
+--
+
+INSERT INTO `tblUsersProfiles` (`UserProfileId`, `UserId`, `FirstName`, `LastName`, `Token`, `TokenExpiryDateTime`, `UserProfileStatus`) VALUES
+(1, 1, 'Juan', 'Pérez', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNVEktMjAyMi0yIiwiZXhwIjoiMjAyMjExMTgxOTA0NTUiLCJqdGkiOiIxIn0.chbZ6O019_WKr4n6NXPMVORQ0iTPgeNfC9FK6XJIoWw', '2022-11-18 19:04:55', 1),
+(2, 1, 'María', 'López', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNVEktMjAyMi0yIiwiZXhwIjoiMjAyMjExMTgxOTA1MDgiLCJqdGkiOiIyIn0.yQNZYoU8jiKjFtJfj9Fc-7c5NZYsVysnSAl2AJGIM2o', '2022-11-18 19:05:08', 1);
 
 --
 -- Índices para tablas volcadas
@@ -179,13 +194,13 @@ ALTER TABLE `tblTasksNodes`
 -- AUTO_INCREMENT de la tabla `tblUsers`
 --
 ALTER TABLE `tblUsers`
-  MODIFY `UserId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `UserId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `tblUsersProfiles`
 --
 ALTER TABLE `tblUsersProfiles`
-  MODIFY `UserProfileId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `UserProfileId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Restricciones para tablas volcadas
