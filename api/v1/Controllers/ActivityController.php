@@ -57,7 +57,7 @@
 
         private function getRecordsStatuses() {
             // DEBUG ***********
-            //return $this->debugResponse($this->queryString);
+            // return $this->debugResponse($this->queryString);
             // DEBUG ***********
             $result = $this->resourceObject->getStatuses($this->queryString);
             if ( $result['count'] < 1 ) {
@@ -78,7 +78,7 @@
 
         private function getAllRecords() {
             // DEBUG ***********
-            //return $this->debugResponse($this->queryString);
+            // return $this->debugResponse($this->queryString);
             // DEBUG ***********
             $result = $this->resourceObject->getAll($this->queryString);
             if ( $result['count'] < 1 ) {
@@ -90,25 +90,22 @@
 
         private function createRecord() {
             // DEBUG ***********
-            //return $this->debugResponse($this->requestBody);
+            // return $this->debugResponse($this->requestBody);
             // DEBUG ***********
-            if (!isset($this->requestBody['data']['ActivityCategoryId']) || !isset($this->requestBody['data']['ActivitySubCategoryId'])
-            || !isset($this->requestBody['data']['ActivityBrandId']) || !isset($this->requestBody['data']['ActivityName'])
-            || !isset($this->requestBody['data']['ActivitySalePrice']))
+            if (!isset($this->requestBody['data']['UserProfileId']) || !isset($this->requestBody['data']['TaskId'])
+            || !isset($this->requestBody['data']['ActivityDateTime']))
                 return $this->notAcceptableResponse('Missing parameters');
             
             // Required fields ------------------------------------------------
-            $ActivityCategoryId = $this->requestBody['data']['ActivityCategoryId'];
-            $ActivitySubCategoryId = $this->requestBody['data']['ActivitySubCategoryId'];
-            $ActivityBrandId = $this->requestBody['data']['ActivityBrandId'];
-            $ActivityName = $this->requestBody['data']['ActivityName'];
-            $ActivitySalePrice = $this->requestBody['data']['ActivitySalePrice'];
+            $UserProfileId = $this->requestBody['data']['UserProfileId'];
+            $TaskId = $this->requestBody['data']['TaskId'];
+            $ActivityDateTime = $this->requestBody['data']['ActivityDateTime'];
+            $ActivityStart = $this->requestBody['data']['ActivityStart'];
+            $ActivityEnd = $this->requestBody['data']['ActivityEnd'];
             // Optional fields ------------------------------------------------
-            $ActivityDescription = isset($this->requestBody['data']['ActivityDescription']) ? $this->requestBody['data']['ActivityDescription'] : NULL;
-            $ActivityBarcode = isset($this->requestBody['data']['ActivityBarcode']) ? $this->requestBody['data']['ActivityBarcode'] : NULL;
-            $ActivityComboId = isset($this->requestBody['data']['ActivityComboId']) ? $this->requestBody['data']['ActivityComboId'] : 0;
+            $ActivityResults = $this->requestBody['data']['ActivityResults'];
 
-            $result = $this->resourceObject->createActivity($ActivityCategoryId, $ActivitySubCategoryId, $ActivityBrandId, $ActivityName, $ActivityDescription, $ActivitySalePrice, $ActivityBarcode, $ActivityComboId);
+            $result = $this->resourceObject->createActivity($UserProfileId, $TaskId, $ActivityDateTime, $ActivityStart, $ActivityEnd, $ActivityResults);
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
@@ -119,26 +116,19 @@
 
         private function updateRecord() {
             // DEBUG ***********
-            //$result['debug'] = $this->requestBody;
+            // return $this->debugResponse($this->requestBody);
             // DEBUG ***********
-            if (!isset($this->requestBody['data']['ActivityId']) || !isset($this->requestBody['data']['ActivityCategoryId']) 
-            || !isset($this->requestBody['data']['ActivitySubCategoryId']) || !isset($this->requestBody['data']['ActivityBrandId']) 
-            || !isset($this->requestBody['data']['ActivityName']) || !isset($this->requestBody['data']['ActivitySalePrice']))
+            if (!isset($this->requestBody['data']['ActivityId']) || !isset($this->requestBody['data']['UserProfileId']) 
+            || !isset($this->requestBody['data']['TaskId']) || !isset($this->requestBody['data']['ActivityDateTime']))
                 return $this->notAcceptableResponse('Missing parameters');
             
             // Required fields ------------------------------------------------
             $ActivityId = $this->requestBody['data']['ActivityId'];
-            $ActivityCategoryId = $this->requestBody['data']['ActivityCategoryId'];
-            $ActivitySubCategoryId = $this->requestBody['data']['ActivitySubCategoryId'];
-            $ActivityBrandId = $this->requestBody['data']['ActivityBrandId'];
-            $ActivityName = $this->requestBody['data']['ActivityName'];
-            $ActivitySalePrice = $this->requestBody['data']['ActivitySalePrice'];
-            // Optional fields ------------------------------------------------
-            $ActivityDescription = isset($this->requestBody['data']['ActivityDescription']) ? $this->requestBody['data']['ActivityDescription'] : NULL;
-            $ActivityBarcode = isset($this->requestBody['data']['ActivityBarcode']) ? $this->requestBody['data']['ActivityBarcode'] : NULL;
-            $ActivityComboId = isset($this->requestBody['data']['ActivityComboId']) ? $this->requestBody['data']['ActivityComboId'] : 0;
+            $UserProfileId = $this->requestBody['data']['UserProfileId'];
+            $TaskId = $this->requestBody['data']['TaskId'];
+            $ActivityDateTime = $this->requestBody['data']['ActivityDateTime'];
 
-            $result = $this->resourceObject->updateActivity($ActivityId, $ActivityCategoryId, $ActivitySubCategoryId, $ActivityBrandId, $ActivityName, $ActivityDescription, $ActivitySalePrice, $ActivityBarcode, $ActivityComboId);
+            $result = $this->resourceObject->updateActivity($ActivityId, $UserProfileId, $TaskId, $ActivityDateTime);
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
@@ -148,9 +138,9 @@
         }
 
         private function modifyRecord() {
-            // DEBUG ***********
-            $result['debug'] = $this->requestBody;
-            // DEBUG ***********
+            // // DEBUG ***********
+            // return $this->debugResponse($this->requestBody);
+            // // DEBUG ***********
             if (!isset($this->requestBody['data']['ActivityId']) || !isset($this->requestBody['data']['Action']))
                 return $this->notAcceptableResponse('Missing parameters');
             

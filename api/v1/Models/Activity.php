@@ -2,25 +2,22 @@
     require_once( './System/Database.php' );
     require_once( './Models/AppModelCore.php' );
 
-    class Good extends AppModelCore {
+    class Activity extends AppModelCore {
         
         // Class properties
-        public $GoodId;
-        public $GoodCategoryId;
-        public $GoodCategoryName;       // tblGoodsCategories:GoodCategoryName
-        public $GoodSubCategoryId;
-        public $GoodSubCategoryName;    // tblGoodsSubCategories:GoodSubCategoryName
-        public $GoodBrandId;
-        public $GoodBrandName;          // tblGoodsBrands:GoodBrandName
-        public $GoodName;
-        public $GoodDescription;
-        public $GoodSalePrice;
-        public $GoodBarcode;
-        public $GoodComboId;
-        public $GoodStatus;
+        public $ActivityId;
+        public $UserProfileId;
+        public $TaskId;
+        public $TaskTitle;                  // tblTasks::TaskTitle
+        public $ActivityDateTime;
+        public $ActivityStart;
+        public $ActivityEnd;
+        public $ActivityResults;
+        public $CreatedAt;
+        public $ActivityStatus;
 
         // Search criteria fields string
-        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(GoodBrandName,""),"|",COALESCE(GoodName,""),"|",COALESCE(GoodDescription,""),"|",COALESCE(GoodBarcode,""))';
+        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(TaskTitle,""),"|",COALESCE(ActivityResults,""))';
 
         // User contructor (DB Connection)
         public function __construct() {
@@ -29,12 +26,10 @@
 
         // Init DB properties -------------------------------------------------
         private function DB_initProperties() {
-            $this->SQL_Tables = 'tblGoods AS t1 LEFT JOIN 
-                                tblGoodsBrands AS t2 USING(GoodBrandId) LEFT JOIN 
-                                tblGoodsCategories AS t3 USING(GoodCategoryId) LEFT JOIN 
-                                tblGoodsSubCategories AS t4 USING(GoodSubCategoryId)';
+            $this->SQL_Tables = 'tblActivities AS t1 LEFT JOIN 
+                                tblTasks AS t2 USING(TaskId)';
             $this->SQL_Conditions = 'TRUE';
-            $this->SQL_Order = 'GoodId';
+            $this->SQL_Order = 'ActivityId';
             $this->SQL_Limit = NULL;
             $this->SQL_Params = [];
             $this->SQL_Sentence = NULL;
@@ -53,19 +48,16 @@
             
             try {
                 $SQL_GlobalQuery = 'SELECT 
-                    t1.GoodId AS GoodId, 
-                    t1.GoodCategoryId AS GoodCategoryId, 
-                    t3.GoodCategoryName AS GoodCategoryName, 
-                    t1.GoodSubCategoryId AS GoodSubCategoryId, 
-                    t4.GoodSubCategoryName AS GoodSubCategoryName, 
-                    t1.GoodBrandId AS GoodBrandId, 
-                    t2.GoodBrandName AS GoodBrandName, 
-                    t1.GoodName AS GoodName, 
-                    t1.GoodDescription AS GoodDescription, 
-                    t1.GoodSalePrice AS GoodSalePrice, 
-                    t1.GoodBarcode AS GoodBarcode, 
-                    t1.GoodComboId AS GoodComboId, 
-                    t1.GoodStatus AS GoodStatus 
+                    t1.ActivityId AS ActivityId, 
+                    t1.UserProfileId AS UserProfileId, 
+                    t1.TaskId AS TaskId, 
+                    t2.TaskTitle AS TaskTitle, 
+                    t1.ActivityDateTime AS ActivityDateTime, 
+                    t1.ActivityStart AS ActivityStart, 
+                    t1.ActivityEnd AS ActivityEnd, 
+                    t1.ActivityResults AS ActivityResults, 
+                    t1.CreatedAt AS CreatedAt, 
+                    t1.ActivityStatus AS ActivityStatus 
                     FROM '
                     .$this->SQL_Tables.
                     ' WHERE '
@@ -78,6 +70,7 @@
                 $this->DB_loadParameters();
                 $this->SQL_Sentence->execute();
                 if ($this->SQL_Sentence->rowCount() < 1) {
+                    $this->response['globalCount'] = 0; // Empty result
                     $this->response['count'] = 0; // Empty result
                     $this->response['msj'] = '['.get_class($this).'] No records found';
                     return $this->response; // Returns response with no records
@@ -107,10 +100,10 @@
         // ********************************************************************
         // (READ) GET A SINGLE ROW ********************************************
         // ********************************************************************
-        public function getGood($GoodId) {
+        public function getActivity($ActivityId) {
             $this->DB_initProperties();
-            if (is_numeric($GoodId)) {
-                $this->SQL_Conditions .= ' AND GoodId = :GoodId';
+            if (is_numeric($ActivityId)) {
+                $this->SQL_Conditions .= ' AND ActivityId = :ActivityId';
                 $this->SQL_Limit = '0,1';
             }
             else {
@@ -120,19 +113,16 @@
             
             try {
                 $SQL_Query = 'SELECT 
-                    t1.GoodId AS GoodId, 
-                    t1.GoodCategoryId AS GoodCategoryId, 
-                    t3.GoodCategoryName AS GoodCategoryName, 
-                    t1.GoodSubCategoryId AS GoodSubCategoryId, 
-                    t4.GoodSubCategoryName AS GoodSubCategoryName, 
-                    t1.GoodBrandId AS GoodBrandId, 
-                    t2.GoodBrandName AS GoodBrandName, 
-                    t1.GoodName AS GoodName, 
-                    t1.GoodDescription AS GoodDescription, 
-                    t1.GoodSalePrice AS GoodSalePrice, 
-                    t1.GoodBarcode AS GoodBarcode, 
-                    t1.GoodComboId AS GoodComboId, 
-                    t1.GoodStatus AS GoodStatus 
+                    t1.ActivityId AS ActivityId, 
+                    t1.UserProfileId AS UserProfileId, 
+                    t1.TaskId AS TaskId, 
+                    t2.TaskTitle AS TaskTitle, 
+                    t1.ActivityDateTime AS ActivityDateTime, 
+                    t1.ActivityStart AS ActivityStart, 
+                    t1.ActivityEnd AS ActivityEnd, 
+                    t1.ActivityResults AS ActivityResults, 
+                    t1.CreatedAt AS CreatedAt, 
+                    t1.ActivityStatus AS ActivityStatus 
                     FROM '
                     .$this->SQL_Tables.
                     ' WHERE '
@@ -140,17 +130,18 @@
                     (!is_null($this->SQL_Limit) ? ' LIMIT '.$this->SQL_Limit.';' : ';');
                 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodId', $GoodId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityId', $ActivityId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 if ($this->SQL_Sentence->rowCount() < 1) {
+                    $this->response['globalCount'] = 0; // Empty result
                     $this->response['count'] = 0; // No records found
                     $this->response['msj'] = '['.get_class($this).'] No records found';
                     return $this->response; // Return response with no records
                 };
 
                 // If there is data, we build the response with DB info -------
-                $this->response['data'][$GoodId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
-                $this->updateProperties($this->response['data'][$GoodId]);
+                $this->response['data'][$ActivityId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
+                $this->updateProperties($this->response['data'][$ActivityId]);
                 $this->response['count'] = 1; // Unique record
                 $this->response['globalCount'] = 1;
                 // ------------------------------------------------------------
@@ -167,51 +158,51 @@
         // ********************************************************************
         // (CREATE) CREATE NEW RECORD INTO DB *********************************
         // ********************************************************************
-        public function createGood($GoodCategoryId, $GoodSubCategoryId, $GoodBrandId, $GoodName, $GoodDescription, $GoodSalePrice, $GoodBarcode, $GoodComboId) {
+        public function createActivity($UserProfileId, $TaskId, $ActivityDateTime) {
             $this->DB_initProperties();
-            $GoodId = NULL; // NULL by default on new records
-            $GoodStatus = 1; // 1(Active) by default on new records
+            $ActivityId = NULL; // NULL by default on new records
+            $CreatedAt = date('Y-m-d H:i:s');
+            $ActivityStatus = 1; // 1(Active) by default on new records
 
             ## TODO: VALIDATION INSTRUCTIONS FOR PARAMETERS -------------------
             ## ... 
             // Meanwhile ......
-            if (empty($GoodCategoryId) || empty($GoodSubCategoryId) || empty($GoodBrandId) || empty($GoodName) || empty($GoodSalePrice)) {
+            if (empty($UserProfileId) || empty($TaskId) || empty($ActivityDateTime)) {
                 $this->response['error'] = '['.get_class($this).'] Error: Main fields cannot be empty';
                 return $this->response;
             };
-            $GoodComboId = $GoodComboId < 0 ? 0 : $GoodComboId; // Ensure unsigned integer
             ## TODO: VALIDATION INSTRUCTIONS FOR PARAMETERS -------------------
             try {
-                $SQL_Query = 'INSERT INTO tblGoods VALUES (
-                  :GoodId, 
-                  :GoodCategoryId, 
-                  :GoodSubCategoryId, 
-                  :GoodBrandId, 
-                  :GoodName, 
-                  :GoodDescription, 
-                  :GoodSalePrice, 
-                  :GoodBarcode, 
-                  :GoodComboId, 
-                  :GoodStatus)';
+                $SQL_Query = 'INSERT INTO tblActivities VALUES (
+                  :ActivityId, 
+                  :UserProfileId, 
+                  :TaskId, 
+                  :ActivityDateTime, 
+                  :ActivityStart, 
+                  :ActivityEnd, 
+                  :ActivitySalePriceREM, 
+                  :ActivityResults, 
+                  :CreatedAt, 
+                  :ActivityStatus)';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodId', $GoodId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodCategoryId', $GoodCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodBrandId', $GoodBrandId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodName', $GoodName, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodDescription', $GoodDescription, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodSalePrice', $GoodSalePrice, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodBarcode', $GoodBarcode, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodComboId', $GoodComboId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodStatus', $GoodStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityId', $ActivityId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityDateTime', $ActivityDateTime, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivityStart', $ActivityStart, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivityEnd', $ActivityEnd, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivitySalePriceREM', $ActivitySalePriceREM, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivityResults', $ActivityResults, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityStatus', $ActivityStatus, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $GoodId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
+                    $ActivityId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
                     $this->response = [
                         'count' => 1, 
-                        'data' => ['id' => $GoodId], // Return created ID
+                        'data' => ['id' => $ActivityId], // Return created ID
                         'msj' => '['.get_class($this).'] Ok: New record created successfully'
                     ];
                 }
@@ -231,16 +222,16 @@
         // ********************************************************************
         // (UPDATE) UPDATE RECORD ON DB ***************************************
         // ********************************************************************
-        public function updateGood($GoodId, $GoodCategoryId, $GoodSubCategoryId, $GoodBrandId, $GoodName, $GoodDescription, $GoodSalePrice, $GoodBarcode, $GoodComboId) {
-            $this->getGood($GoodId); // Get current record data from DB
+        public function updateActivity($ActivityId, $UserProfileId, $ActivitySubCategoryIdREM, $ActivityBrandIdREM, $ActivityStart, $ActivityEnd, $ActivitySalePriceREM, $ActivityResults, $CreatedAt) {
+            $this->getActivity($ActivityId); // Get current record data from DB
 
-            $GoodComboId = $GoodComboId < 0 ? 0 : $GoodComboId; // Ensure unsigned integer
+            $CreatedAt = $CreatedAt < 0 ? 0 : $CreatedAt; // Ensure unsigned integer
 
             // Confirm changes on at least 1 field ----------------------------
-            if ($this->GoodCategoryId == $GoodCategoryId    && $this->GoodSubCategoryId == $GoodSubCategoryId 
-            && $this->GoodBrandId == $GoodBrandId           && $this->GoodName == $GoodName 
-            && $this->GoodDescription == $GoodDescription   && $this->GoodSalePrice == $GoodSalePrice 
-            && $this->GoodBarcode == $GoodBarcode           && $this->GoodComboId == $GoodComboId) {
+            if ($this->UserProfileId == $UserProfileId    && $this->ActivitySubCategoryIdREM == $ActivitySubCategoryIdREM 
+            && $this->ActivityBrandIdREM == $ActivityBrandIdREM           && $this->ActivityStart == $ActivityStart 
+            && $this->ActivityEnd == $ActivityEnd   && $this->ActivitySalePriceREM == $ActivitySalePriceREM 
+            && $this->ActivityResults == $ActivityResults           && $this->CreatedAt == $CreatedAt) {
                 $this->response = [
                     'count' => -2,
                     'msj' => '['.get_class($this).'] Warning: No modifications made on record'
@@ -250,37 +241,37 @@
             // ----------------------------------------------------------------
 
             try {
-                $SQL_Query = 'UPDATE tblGoods SET 
-                  GoodCategoryId = :GoodCategoryId, 
-                  GoodSubCategoryId = :GoodSubCategoryId, 
-                  GoodBrandId = :GoodBrandId, 
-                  GoodName = :GoodName, 
-                  GoodDescription = :GoodDescription, 
-                  GoodSalePrice = :GoodSalePrice, 
-                  GoodBarcode = :GoodBarcode, 
-                  GoodComboId = :GoodComboId 
+                $SQL_Query = 'UPDATE tblActivities SET 
+                  UserProfileId = :UserProfileId, 
+                  ActivitySubCategoryIdREM = :ActivitySubCategoryIdREM, 
+                  ActivityBrandIdREM = :ActivityBrandIdREM, 
+                  ActivityStart = :ActivityStart, 
+                  ActivityEnd = :ActivityEnd, 
+                  ActivitySalePriceREM = :ActivitySalePriceREM, 
+                  ActivityResults = :ActivityResults, 
+                  CreatedAt = :CreatedAt 
                   WHERE 
-                  GoodId = :GoodId';
+                  ActivityId = :ActivityId';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodCategoryId', $GoodCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodBrandId', $GoodBrandId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodName', $GoodName, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodDescription', $GoodDescription, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodSalePrice', $GoodSalePrice, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodBarcode', $GoodBarcode, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodComboId', $GoodComboId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodId', $GoodId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivitySubCategoryIdREM', $ActivitySubCategoryIdREM, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityBrandIdREM', $ActivityBrandIdREM, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityStart', $ActivityStart, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivityEnd', $ActivityEnd, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivitySalePriceREM', $ActivitySalePriceREM, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':ActivityResults', $ActivityResults, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityId', $ActivityId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
                     $this->response = [
                         'count' => 1,
-                        'data' => ['id' => $GoodId],
+                        'data' => ['id' => $ActivityId],
                         'msj' => '['.get_class($this).'] Ok: Record updated successfully'
                     ];
-                    $this->getGood($GoodId); // Update current object data with modified info
+                    $this->getActivity($ActivityId); // Update current object data with modified info
                 }
                 else {
                     $this->response = [
@@ -302,26 +293,26 @@
         // ********************************************************************
         // (REACTIVATE) REACTIVATE RECORD ON DB *******************************
         // ********************************************************************
-        public function reactivateGood($GoodId) {
-            $this->getGood($GoodId); // Get current record data from DB
-            $GoodStatus = 1; // Default active status (1)
+        public function reactivateActivity($ActivityId) {
+            $this->getActivity($ActivityId); // Get current record data from DB
+            $ActivityStatus = 1; // Default active status (1)
 
             try {
-                $SQL_Query = 'UPDATE tblGoods SET 
-                    GoodStatus = :GoodStatus 
+                $SQL_Query = 'UPDATE tblActivities SET 
+                    ActivityStatus = :ActivityStatus 
                     WHERE 
-                    GoodId = :GoodId';
+                    ActivityId = :ActivityId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodStatus', $GoodStatus, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodId', $GoodId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityStatus', $ActivityStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityId', $ActivityId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
                     $this->response = [
                         'msj' => '['.get_class($this).'] Ok: Record reactivated successfully'
                     ];
-                    $this->getGood($GoodId); // Update current object data after reactivation
+                    $this->getActivity($ActivityId); // Update current object data after reactivation
                 }
                 else {
                     $this->response = [
@@ -339,26 +330,26 @@
         // ********************************************************************
         // (DEACTIVATE) DEACTIVATE RECORD ON DB *******************************
         // ********************************************************************
-        public function deactivateGood($GoodId) {
-            $this->getGood($GoodId); // Get current record data from DB
-            $GoodStatus = 0; // Default inactive status (0)
+        public function deactivateActivity($ActivityId) {
+            $this->getActivity($ActivityId); // Get current record data from DB
+            $ActivityStatus = 0; // Default inactive status (0)
 
             try {
-                $SQL_Query = 'UPDATE tblGoods SET 
-                    GoodStatus = :GoodStatus 
+                $SQL_Query = 'UPDATE tblActivities SET 
+                    ActivityStatus = :ActivityStatus 
                     WHERE 
-                    GoodId = :GoodId';
+                    ActivityId = :ActivityId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodStatus', $GoodStatus, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodId', $GoodId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityStatus', $ActivityStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityId', $ActivityId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
                     $this->response = [
                         'msj' => '['.get_class($this).'] Ok: Record deactivated successfully'
                     ];
-                    $this->getGood($GoodId); // Update current object data after deactivation
+                    $this->getActivity($ActivityId); // Update current object data after deactivation
                 }
                 else {
                     $this->response = [
@@ -387,12 +378,12 @@
                 // MANUAL STATIC RESPONSE *************************************
                 $this->response['data'] = [
                     array(
-                        'GoodStatusId' => 0,
-                        'GoodStatusValue' => 'Inactivo'
+                        'ActivityStatusId' => 0,
+                        'ActivityStatusValue' => 'Inactivo'
                     ),
                     array(
-                        'GoodStatusId' => 1,
-                        'GoodStatusValue' => 'Activo'
+                        'ActivityStatusId' => 1,
+                        'ActivityStatusValue' => 'Activo'
                     )
                 ]; // Data Array to be included in the response
                 
