@@ -2,17 +2,17 @@
     require_once( './System/Database.php' );
     require_once( './Models/AppModelCore.php' );
 
-    class GoodSubCategory extends AppModelCore {
+    class Task extends AppModelCore {
         
         // Class properties
-        public $GoodSubCategoryId;
-        public $GoodCategoryId;
-        public $GoodCategoryName;           // tblGoodsCategories::GoodCategoryName
-        public $GoodSubCategoryName;
-        public $GoodSubCategoryStatus;
+        public $TaskId;
+        public $TaskType;
+        public $TaskTitle;
+        public $CreatedAt;
+        public $TaskStatus;
 
         // Search criteria fields string
-        private $SearchCriteriaFieldsString = 'CONCAT("[",COALESCE(GoodSubCategoryId,""),"]",COALESCE(GoodCategoryName,""),COALESCE(GoodSubCategoryName,""))';
+        private $SearchCriteriaFieldsString = 'CONCAT("[",COALESCE(TaskId,""),"]",COALESCE(TaskTitle,""))';
 
         // User contructor (DB Connection)
         public function __construct() {
@@ -21,10 +21,9 @@
 
         // Init DB properties -------------------------------------------------
         private function DB_initProperties() {
-            $this->SQL_Tables = 'tblGoodsSubCategories AS t1 LEFT JOIN 
-                                tblGoodsCategories AS t2 USING(GoodCategoryId)';
+            $this->SQL_Tables = 'tblTasks';
             $this->SQL_Conditions = 'TRUE';
-            $this->SQL_Order = 'GoodSubCategoryId';
+            $this->SQL_Order = 'TaskId';
             $this->SQL_Limit = NULL;
             $this->SQL_Params = [];
             $this->SQL_Sentence = NULL;
@@ -43,11 +42,11 @@
             
             try {
                 $SQL_GlobalQuery = 'SELECT 
-                    t1.GoodSubCategoryId AS GoodSubCategoryId, 
-                    t1.GoodCategoryId AS GoodCategoryId, 
-                    t2.GoodCategoryName AS GoodCategoryName, 
-                    t1.GoodSubCategoryName AS GoodSubCategoryName, 
-                    t1.GoodSubCategoryStatus AS GoodSubCategoryStatus 
+                    TaskId AS TaskId, 
+                    TaskType AS TaskType, 
+                    TaskTitle AS TaskTitle, 
+                    CreatedAt AS CreatedAt, 
+                    TaskStatus AS TaskStatus 
                     FROM '
                     .$this->SQL_Tables.
                     ' WHERE '
@@ -60,6 +59,7 @@
                 $this->DB_loadParameters();
                 $this->SQL_Sentence->execute();
                 if ($this->SQL_Sentence->rowCount() < 1) {
+                    $this->response['globalCount'] = 0; // Empty result
                     $this->response['count'] = 0; // Empty result
                     $this->response['msj'] = '['.get_class($this).'] No records found';
                     return $this->response; // Returns response with no records
@@ -89,10 +89,10 @@
         // ********************************************************************
         // (READ) GET A SINGLE ROW ********************************************
         // ********************************************************************
-        public function getGoodSubCategory($GoodSubCategoryId) {
+        public function getTask($TaskId) {
             $this->DB_initProperties();
-            if (is_numeric($GoodSubCategoryId)) {
-                $this->SQL_Conditions .= ' AND GoodSubCategoryId = :GoodSubCategoryId';
+            if (is_numeric($TaskId)) {
+                $this->SQL_Conditions .= ' AND TaskId = :TaskId';
                 $this->SQL_Limit = '0,1';
             }
             else {
@@ -102,11 +102,11 @@
             
             try {
                 $SQL_Query = 'SELECT 
-                    t1.GoodSubCategoryId AS GoodSubCategoryId, 
-                    t1.GoodCategoryId AS GoodCategoryId, 
-                    t2.GoodCategoryName AS GoodCategoryName, 
-                    t1.GoodSubCategoryName AS GoodSubCategoryName, 
-                    t1.GoodSubCategoryStatus AS GoodSubCategoryStatus 
+                    TaskId AS TaskId, 
+                    TaskType AS TaskType, 
+                    TaskTitle AS TaskTitle, 
+                    CreatedAt AS CreatedAt, 
+                    TaskStatus AS TaskStatus 
                     FROM '
                     .$this->SQL_Tables.
                     ' WHERE '
@@ -114,17 +114,19 @@
                     (!is_null($this->SQL_Limit) ? ' LIMIT '.$this->SQL_Limit.';' : ';');
                 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 if ($this->SQL_Sentence->rowCount() < 1) {
+                    $this->response['globalCount'] = 0; // No records found
                     $this->response['count'] = 0; // No records found
                     $this->response['msj'] = '['.get_class($this).'] No records found';
                     return $this->response; // Return response with no records
                 };
 
                 // If there is data, we build the response with DB info -------
-                $this->response['data'][$GoodSubCategoryId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
-                $this->updateProperties($this->response['data'][$GoodSubCategoryId]);
+                $this->response['data'][$TaskId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
+                $this->updateProperties($this->response['data'][$TaskId]);
+                $this->response['globalCount'] = 1; // Unique record
                 $this->response['count'] = 1; // Unique record
                 // ------------------------------------------------------------
 
@@ -140,36 +142,38 @@
         // ********************************************************************
         // (CREATE) CREATE NEW RECORD INTO DB *********************************
         // ********************************************************************
-        public function createGoodSubCategory($GoodCategoryId, $GoodSubCategoryName) {
+        public function createTask($TaskType, $TaskTitle) {
             $this->DB_initProperties();
-            $GoodSubCategoryId = NULL; // NULL by default on new records
-            $GoodSubCategoryStatus = 1; // 1(Active) by default on new records
+            $TaskId = NULL; // NULL by default on new records
+            $CreatedAt = date('Y-m-d H:i:s');
+            $TaskStatus = 1; // 1(Active) by default on new records
             try {
-                $SQL_Query = 'INSERT INTO tblGoodsSubCategories VALUES (
-                    :GoodSubCategoryId, 
-                    :GoodCategoryId, 
-                    :GoodSubCategoryName, 
-                    :GoodSubCategoryStatus)';
+                $SQL_Query = 'INSERT INTO tblTasks VALUES (
+                    :TaskId, 
+                    :TaskType, 
+                    :TaskTitle, 
+                    :CreatedAt, 
+                    :TaskStatus)';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodCategoryId', $GoodCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryName', $GoodSubCategoryName, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryStatus', $GoodSubCategoryStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskType', $TaskType, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskTitle', $TaskTitle, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskStatus', $TaskStatus, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $GoodSubCategoryId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
+                    $TaskId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
                     $this->response = [
+                        'globalCount' => 1, 
                         'count' => 1, 
-                        'data' => ['id' => $GoodSubCategoryId], // Return created ID
+                        'data' => ['Id' => $TaskId], // Return created ID
                         'msj' => '['.get_class($this).'] Ok: New record created successfully'
                     ];
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot create new record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot create new record';
                 };
             }
             catch (PDOException $ex) {
@@ -182,41 +186,38 @@
         // ********************************************************************
         // (UPDATE) UPDATE RECORD ON DB ***************************************
         // ********************************************************************
-        public function updateGoodSubCategory($GoodSubCategoryId, $GoodCategoryId, $GoodSubCategoryName) {
-            $this->getGoodSubCategory($GoodSubCategoryId); // Get current record data from DB
+        public function updateTask($TaskId, $TaskType, $TaskTitle) {
+            $this->getTask($TaskId); // Get current record data from DB
 
             // Confirm changes on at least 1 field ----------------------------
-            if ($this->GoodCategoryId == $GoodCategoryId && $this->GoodSubCategoryName == $GoodSubCategoryName) {
-                $this->response = [
-                    'msj' => '['.get_class($this).'] Warning: No modifications made on record'
-                ];
+            if ($this->TaskType == $TaskType && $this->TaskTitle == $TaskTitle) {
+                $this->response['count'] = -1;
+                $this->response['globalCount'] = -1;
+                $this->response['data'] = ['Id' => $TaskId];
+                $this->response['msj'] = '['.get_class($this).'] Warning: No modifications made on record';
                 return $this->response; // Return 'no modification' response
             };
             // ----------------------------------------------------------------
 
             try {
-                $SQL_Query = 'UPDATE tblGoodsSubCategories SET 
-                    GoodCategoryId = :GoodCategoryId, 
-                    GoodSubCategoryName = :GoodSubCategoryName 
+                $SQL_Query = 'UPDATE tblTasks SET 
+                    TaskType = :TaskType, 
+                    TaskTitle = :TaskTitle 
                     WHERE 
-                    GoodSubCategoryId = :GoodSubCategoryId';
+                    TaskId = :TaskId';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodCategoryId', $GoodCategoryId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryName', $GoodSubCategoryName, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskType', $TaskType, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskTitle', $TaskTitle, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Ok: Record updated successfully'
-                    ];
-                    $this->getGoodSubCategory($GoodSubCategoryId); // Update current object data with modified info
+                    $this->getTask($TaskId); // Update current object data with modified info
+                    $this->response['msj'] = '['.get_class($this).'] Ok: Record updated successfully';
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot update record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot update record';
                 };
             }
             catch (PDOException $ex) {
@@ -229,31 +230,27 @@
         // ********************************************************************
         // (REACTIVATE) REACTIVATE RECORD ON DB *******************************
         // ********************************************************************
-        public function reactivateGoodSubCategory($GoodSubCategoryId) {
-            $this->getGoodSubCategory($GoodSubCategoryId); // Get current record data from DB
-            $GoodSubCategoryStatus = 1; // Default active status (1)
+        public function reactivateTask($TaskId) {
+            $this->getTask($TaskId); // Get current record data from DB
+            $TaskStatus = 1; // Default active status (1)
 
             try {
-                $SQL_Query = 'UPDATE tblGoodsSubCategories SET 
-                    GoodSubCategoryStatus = :GoodSubCategoryStatus 
+                $SQL_Query = 'UPDATE tblTasks SET 
+                    TaskStatus = :TaskStatus 
                     WHERE 
-                    GoodSubCategoryId = :GoodSubCategoryId';
+                    TaskId = :TaskId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryStatus', $GoodSubCategoryStatus, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskStatus', $TaskStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Ok: Record reactivated successfully'
-                    ];
-                    $this->getGoodSubCategory($GoodSubCategoryId); // Update current object data after reactivation
+                    $this->getTask($TaskId); // Update current object data after reactivation
+                    $this->response['msj'] = '['.get_class($this).'] Ok: Record reactivated successfully';
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot reactivate record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot reactivate record';
                 };
             }
             catch (PDOException $ex) {
@@ -266,31 +263,27 @@
         // ********************************************************************
         // (DEACTIVATE) DEACTIVATE RECORD ON DB *******************************
         // ********************************************************************
-        public function deactivateGoodSubCategory($GoodSubCategoryId) {
-            $this->getGoodSubCategory($GoodSubCategoryId); // Get current record data from DB
-            $GoodSubCategoryStatus = 0; // Default inactive status (0)
+        public function deactivateTask($TaskId) {
+            $this->getTask($TaskId); // Get current record data from DB
+            $TaskStatus = 0; // Default inactive status (0)
 
             try {
-                $SQL_Query = 'UPDATE tblGoodsSubCategories SET 
-                    GoodSubCategoryStatus = :GoodSubCategoryStatus 
+                $SQL_Query = 'UPDATE tblTasks SET 
+                    TaskStatus = :TaskStatus 
                     WHERE 
-                    GoodSubCategoryId = :GoodSubCategoryId';
+                    TaskId = :TaskId';
 
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryStatus', $GoodSubCategoryStatus, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':GoodSubCategoryId', $GoodSubCategoryId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskStatus', $TaskStatus, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Ok: Record deactivated successfully'
-                    ];
-                    $this->getGoodSubCategory($GoodSubCategoryId); // Update current object data after deactivation
+                    $this->getTask($TaskId); // Update current object data after deactivation
+                    $this->response['msj'] = '['.get_class($this).'] Ok: Record deactivated successfully';
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot deactivate record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot deactivate record';
                 };
             }
             catch (PDOException $ex) {
@@ -314,16 +307,17 @@
                 // MANUAL STATIC RESPONSE *************************************
                 $this->response['data'] = [
                     array(
-                        'GoodSubCategoryStatusId' => 0,
-                        'GoodSubCategoryStatusValue' => 'Inactivo'
+                        'TaskStatusId' => 0,
+                        'TaskStatusValue' => 'Inactivo'
                     ),
                     array(
-                        'GoodSubCategoryStatusId' => 1,
-                        'GoodSubCategoryStatusValue' => 'Activo'
+                        'TaskStatusId' => 1,
+                        'TaskStatusValue' => 'Activo'
                     )
                 ]; // Data Array to be included in the response
                 
                 $this->response['count'] = count($this->response['data']); // Row count to be included in the response
+                $this->response['globalCount'] = $this->response['count'];
                 // MANUAL STATIC RESPONSE *************************************
 
                 return $this->response; // Return response with records

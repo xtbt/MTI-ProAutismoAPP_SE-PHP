@@ -44,6 +44,11 @@
                 $controllerObject = new UserProfileController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
+            case 'tasks':
+                require_once( './Controllers/TaskController.php' );
+                $controllerObject = new TaskController( $requestMethod, $resourceId, $queryString, $requestBody );
+                $apiResponse = $controllerObject->processRequest();
+                break;
             default:
                 $apiResponse = [
                     'statusCodeHeader' => 'HTTP/1.1 404 Not Found', 

@@ -16,8 +16,8 @@
 	} else {
 		define('DB_NAME', 'ProAutismoDB');
 		define('DB_USER', 'root');
-		define('DB_PASSWORD', ''); // XAMPP Test Server
-		//define('DB_PASSWORD', 'root'); // MAMP Test Server
+		//define('DB_PASSWORD', ''); // XAMPP Test Server
+		define('DB_PASSWORD', 'root'); // MAMP Test Server
 	};
 	// ########################################################################
 

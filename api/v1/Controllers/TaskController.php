@@ -1,10 +1,10 @@
 <?php
     // REQUIRED MODULES
     require_once( './Controllers/APIController.php' );
-    require_once( './Models/GoodSubCategory.php' );
+    require_once( './Models/Task.php' );
     
     // USER CONTROLLER
-    class GoodSubCategoryController extends APIController {
+    class TaskController extends APIController {
 
         private $requestMethod = NULL;
         private $resourceId = NULL;
@@ -20,7 +20,7 @@
             $this->queryString = $queryString;
             $this->requestBody = $requestBody;
 
-            $this->resourceObject = new GoodSubCategory();
+            $this->resourceObject = new Task();
         }
 
         public function processRequest() {
@@ -28,7 +28,7 @@
                 case 'GET':
                     if ( NULL !== $this->resourceId )
                         if ( 'statuses' === $this->resourceId )
-                            $response = $this->getGoodsSubCategoriesStatuses();
+                            $response = $this->getRecordsStatuses();
                         else
                             $response = $this->getSingleRecord();
                     else
@@ -55,11 +55,11 @@
             return $response;
         }
 
-        private function getGoodsSubCategoriesStatuses() {
+        private function getRecordsStatuses() {
+            // DEBUG ***********
+            //return $this->debugResponse($this->queryString);
+            // DEBUG ***********
             $result = $this->resourceObject->getStatuses($this->queryString);
-            // DEBUG ***********
-            //$result['debug'] = $this->queryString;
-            // DEBUG ***********
             if ( $result['count'] < 1 ) {
                 return $this->notFoundResponse($result);
             } else {
@@ -68,7 +68,7 @@
         }
 
         private function getSingleRecord() {
-            $result = $this->resourceObject->getGoodSubCategory($this->resourceId);
+            $result = $this->resourceObject->getTask($this->resourceId);
             if ( $result['count'] < 1 ) {
                 return $this->notFoundResponse($result);
             } else {
@@ -77,10 +77,10 @@
         }
 
         private function getAllRecords() {
+            // DEBUG ***********
+            //return $this->debugResponse($this->queryString);
+            // DEBUG ***********
             $result = $this->resourceObject->getAll($this->queryString);
-            // DEBUG ***********
-            $result['debug'] = $this->queryString;
-            // DEBUG ***********
             if ( $result['count'] < 1 ) {
                 return $this->notFoundResponse($result);
             } else {
@@ -90,17 +90,17 @@
 
         private function createRecord() {
             // DEBUG ***********
-            //$result['debug'] = $this->requestBody;
+            //return $this->debugResponse($this->requestBody);
             // DEBUG ***********
-            if (!isset($this->requestBody['data']['GoodCategoryId'])
-            || !isset($this->requestBody['data']['GoodSubCategoryName']))
+            if (!isset( $this->requestBody['data']['TaskType'] )
+            || !isset( $this->requestBody['data']['TaskTitle']) )
                 return $this->notAcceptableResponse('Missing parameters');
             
             // Required fields ------------------------------------------------
-            $GoodCategoryId = $this->requestBody['data']['GoodCategoryId'];
-            $GoodSubCategoryName = $this->requestBody['data']['GoodSubCategoryName'];
+            $TaskType = $this->requestBody['data']['TaskType'];
+            $TaskTitle = $this->requestBody['data']['TaskTitle'];
             
-            $result = $this->resourceObject->createGoodSubCategory($GoodCategoryId, $GoodSubCategoryName);
+            $result = $this->resourceObject->createTask( $TaskType, $TaskTitle );
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
@@ -111,19 +111,19 @@
 
         private function updateRecord() {
             // DEBUG ***********
-            //$result['debug'] = $this->requestBody;
+            //return $this->debugResponse($this->requestBody);
             // DEBUG ***********
-            if (!isset($this->requestBody['data']['GoodSubCategoryId']) 
-            || !isset($this->requestBody['data']['GoodCategoryId']) 
-            || !isset($this->requestBody['data']['GoodSubCategoryName']))
+            if (!isset( $this->requestBody['data']['TaskId'] ) 
+            || !isset( $this->requestBody['data']['TaskType'] ) 
+            || !isset( $this->requestBody['data']['TaskTitle']) )
                 return $this->notAcceptableResponse('Missing parameters');
             
             // Required fields ------------------------------------------------
-            $GoodSubCategoryId = $this->requestBody['data']['GoodSubCategoryId'];
-            $GoodCategoryId = $this->requestBody['data']['GoodCategoryId'];
-            $GoodSubCategoryName = $this->requestBody['data']['GoodSubCategoryName'];
+            $TaskId = $this->requestBody['data']['TaskId'];
+            $TaskType = $this->requestBody['data']['TaskType'];
+            $TaskTitle = $this->requestBody['data']['TaskTitle'];
 
-            $result = $this->resourceObject->updateGoodSubCategory($GoodSubCategoryId, $GoodCategoryId, $GoodSubCategoryName);
+            $result = $this->resourceObject->updateTask( $TaskId, $TaskType, $TaskTitle );
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
@@ -134,19 +134,19 @@
 
         private function modifyRecord() {
             // DEBUG ***********
-            //$result['debug'] = $this->requestBody;
+            //return $this->debugResponse($this->requestBody);
             // DEBUG ***********
-            if (!isset($this->requestBody['data']['GoodSubCategoryId']) 
-            || !isset($this->requestBody['data']['Action']))
+            if (!isset( $this->requestBody['data']['TaskId'] ) 
+            || !isset( $this->requestBody['data']['Action']) )
                 return $this->notAcceptableResponse('Missing parameters');
             
             // Required fields ------------------------------------------------
-            $GoodSubCategoryId = $this->requestBody['data']['GoodSubCategoryId'];
+            $TaskId = $this->requestBody['data']['TaskId'];
 
             if ( $this->requestBody['data']['Action'] == 'Deactivate' )
-                $result = $this->resourceObject->deactivateGoodSubCategory($GoodSubCategoryId);
+                $result = $this->resourceObject->deactivateTask( $TaskId );
             else
-                $result = $this->resourceObject->reactivateGoodSubCategory($GoodSubCategoryId);
+                $result = $this->resourceObject->reactivateTask( $TaskId );
             
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
