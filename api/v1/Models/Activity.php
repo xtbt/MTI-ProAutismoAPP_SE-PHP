@@ -180,7 +180,6 @@
                   :ActivityDateTime, 
                   :ActivityStart, 
                   :ActivityEnd, 
-                  :ActivitySalePriceREM, 
                   :ActivityResults, 
                   :CreatedAt, 
                   :ActivityStatus)';
@@ -192,24 +191,22 @@
                 $this->SQL_Sentence->bindParam(':ActivityDateTime', $ActivityDateTime, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':ActivityStart', $ActivityStart, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':ActivityEnd', $ActivityEnd, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':ActivitySalePriceREM', $ActivitySalePriceREM, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':ActivityResults', $ActivityResults, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':ActivityStatus', $ActivityStatus, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
                     $ActivityId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
-                    $this->response = [
-                        'count' => 1, 
-                        'data' => ['id' => $ActivityId], // Return created ID
-                        'msj' => '['.get_class($this).'] Ok: New record created successfully'
-                    ];
+                    $this->response['globalCount'] = 1;
+                    $this->response['count'] = 1;
+                    $this->response['data'] = ['Id' => $ActivityId];
+                    $this->response['msj'] = '['.get_class($this).'] Ok: New record created successfully';
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot create new record'
-                    ];
+                    $this->response['globalCount'] = 0;
+                    $this->response['count'] = 0;
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot create new record';
                 };
             }
             catch (PDOException $ex) {
@@ -222,20 +219,15 @@
         // ********************************************************************
         // (UPDATE) UPDATE RECORD ON DB ***************************************
         // ********************************************************************
-        public function updateActivity($ActivityId, $UserProfileId, $ActivitySubCategoryIdREM, $ActivityBrandIdREM, $ActivityStart, $ActivityEnd, $ActivitySalePriceREM, $ActivityResults, $CreatedAt) {
+        public function updateActivity($ActivityId, $UserProfileId, $TaskId, $ActivityDateTime) {
             $this->getActivity($ActivityId); // Get current record data from DB
 
-            $CreatedAt = $CreatedAt < 0 ? 0 : $CreatedAt; // Ensure unsigned integer
-
             // Confirm changes on at least 1 field ----------------------------
-            if ($this->UserProfileId == $UserProfileId    && $this->ActivitySubCategoryIdREM == $ActivitySubCategoryIdREM 
-            && $this->ActivityBrandIdREM == $ActivityBrandIdREM           && $this->ActivityStart == $ActivityStart 
-            && $this->ActivityEnd == $ActivityEnd   && $this->ActivitySalePriceREM == $ActivitySalePriceREM 
-            && $this->ActivityResults == $ActivityResults           && $this->CreatedAt == $CreatedAt) {
-                $this->response = [
-                    'count' => -2,
-                    'msj' => '['.get_class($this).'] Warning: No modifications made on record'
-                ];
+            if ($this->UserProfileId == $UserProfileId && $this->TaskId == $TaskId && $this->ActivityDateTime == $ActivityDateTime) {
+                $this->response['globalCount'] = -2;
+                $this->response['count'] = -2;
+                $this->response['data'] = ['Id' => $ActivityId];
+                $this->response['msj'] = '['.get_class($this).'] Warning: No modifications made on record';
                 return $this->response; // Return 'no modification' response
             };
             // ----------------------------------------------------------------
@@ -243,50 +235,31 @@
             try {
                 $SQL_Query = 'UPDATE tblActivities SET 
                   UserProfileId = :UserProfileId, 
-                  ActivitySubCategoryIdREM = :ActivitySubCategoryIdREM, 
-                  ActivityBrandIdREM = :ActivityBrandIdREM, 
-                  ActivityStart = :ActivityStart, 
-                  ActivityEnd = :ActivityEnd, 
-                  ActivitySalePriceREM = :ActivitySalePriceREM, 
-                  ActivityResults = :ActivityResults, 
-                  CreatedAt = :CreatedAt 
+                  TaskId = :TaskId, 
+                  ActivityDateTime = :ActivityDateTime 
                   WHERE 
                   ActivityId = :ActivityId';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
                 $this->SQL_Sentence->bindParam(':UserProfileId', $UserProfileId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':ActivitySubCategoryIdREM', $ActivitySubCategoryIdREM, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':ActivityBrandIdREM', $ActivityBrandIdREM, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':ActivityStart', $ActivityStart, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':ActivityEnd', $ActivityEnd, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':ActivitySalePriceREM', $ActivitySalePriceREM, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':ActivityResults', $ActivityResults, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':ActivityDateTime', $ActivityDateTime, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':ActivityId', $ActivityId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response = [
-                        'count' => 1,
-                        'data' => ['id' => $ActivityId],
-                        'msj' => '['.get_class($this).'] Ok: Record updated successfully'
-                    ];
-                    $this->getActivity($ActivityId); // Update current object data with modified info
+                    $this->getActivity( $ActivityId ); // Update current object data with modified info
+                    $this->response['msj'] = '['.get_class($this).'] Ok: Record updated successfully';
                 }
                 else {
-                    $this->response = [
-                        'count' => -1,
-                        'msj' => '['.get_class($this).'] Error: Cannot update record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot update record';
                 };
             }
             catch (PDOException $ex) {
-                $this->response = [
-                    'count' => -1,
-                    'msj' => '['.get_class($this).'] Error: SQL Exception',
-                    'error' => $ex->getMessage()
-                ];
+                $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
+                $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $ActivityId];
             return $this->response; // Return response Array
         }
 
@@ -309,21 +282,18 @@
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Ok: Record reactivated successfully'
-                    ];
                     $this->getActivity($ActivityId); // Update current object data after reactivation
+                    $this->response['msj'] = '['.get_class($this).'] Ok: Record reactivated successfully';
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot reactivate record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot reactivate record';
                 };
             }
             catch (PDOException $ex) {
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $ActivityId];
             return $this->response; // Return response Array
         }
 
@@ -346,21 +316,18 @@
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Ok: Record deactivated successfully'
-                    ];
                     $this->getActivity($ActivityId); // Update current object data after deactivation
+                    $this->response['msj'] = '['.get_class($this).'] Ok: Record deactivated successfully';
                 }
                 else {
-                    $this->response = [
-                        'msj' => '['.get_class($this).'] Error: Cannot deactivate record'
-                    ];
+                    $this->response['msj'] = '['.get_class($this).'] Error: Cannot deactivate record';
                 };
             }
             catch (PDOException $ex) {
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $ActivityId];
             return $this->response; // Return response Array
         }
 
@@ -388,6 +355,7 @@
                 ]; // Data Array to be included in the response
                 
                 $this->response['count'] = count($this->response['data']); // Row count to be included in the response
+                $this->response['globalCount'] = $this->response['count'];
                 // MANUAL STATIC RESPONSE *************************************
 
                 return $this->response; // Return response with records

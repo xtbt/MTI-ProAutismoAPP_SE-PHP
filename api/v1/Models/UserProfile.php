@@ -188,6 +188,8 @@
                     $this->response['msj'] = '['.get_class($this).'] Ok: New record created successfully';
                 }
                 else {
+                    $this->response['globalCount'] = 0;
+                    $this->response['count'] = 0;
                     $this->response['msj'] = '['.get_class($this).'] Error: Cannot create new record';
                 };
             }
@@ -206,8 +208,8 @@
 
             // Confirm changes on at least 1 field ----------------------------
             if ($this->FirstName == $FirstName && $this->LastName == $LastName) {
-                $this->response['count'] = -1;
-                $this->response['globalCount'] = -1;
+                $this->response['count'] = -2;
+                $this->response['globalCount'] = -2;
                 $this->response['data'] = ['Id' => $UserProfileId];
                 $this->response['msj'] = '['.get_class($this).'] Warning: No modifications made on record';
                 return $this->response; // Return 'no modification' response

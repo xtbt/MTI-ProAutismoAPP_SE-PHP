@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.1
+-- version 5.1.0
 -- https://www.phpmyadmin.net/
 --
--- Servidor: localhost
--- Tiempo de generación: 18-11-2022 a las 17:07:44
--- Versión del servidor: 10.4.20-MariaDB
--- Versión de PHP: 8.0.8
+-- Host: localhost:8889
+-- Generation Time: Nov 23, 2022 at 06:10 PM
+-- Server version: 5.7.32
+-- PHP Version: 7.4.16
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `ProAutismoDB`
+-- Database: `ProAutismoDB`
 --
 DROP DATABASE IF EXISTS `ProAutismoDB`;
 CREATE DATABASE IF NOT EXISTS `ProAutismoDB` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
@@ -27,7 +27,7 @@ USE `ProAutismoDB`;
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `tblActivities`
+-- Table structure for table `tblActivities`
 --
 
 DROP TABLE IF EXISTS `tblActivities`;
@@ -36,17 +36,29 @@ CREATE TABLE `tblActivities` (
   `UserProfileId` smallint(4) UNSIGNED NOT NULL,
   `TaskId` smallint(4) UNSIGNED NOT NULL,
   `ActivityDateTime` datetime NOT NULL,
-  `ActivityStart` datetime NOT NULL,
-  `ActivityEnd` datetime NOT NULL,
-  `ActivityResults` text NOT NULL,
-  `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `ActivityStart` datetime DEFAULT NULL,
+  `ActivityEnd` datetime DEFAULT NULL,
+  `ActivityResults` text,
+  `CreatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `ActivityStatus` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='General Activities Table';
+
+--
+-- Dumping data for table `tblActivities`
+--
+
+INSERT INTO `tblActivities` (`ActivityId`, `UserProfileId`, `TaskId`, `ActivityDateTime`, `ActivityStart`, `ActivityEnd`, `ActivityResults`, `CreatedAt`, `ActivityStatus`) VALUES
+(1, 1, 1, '2022-11-23 08:00:00', NULL, NULL, NULL, '2022-11-23 18:05:07', 1),
+(2, 1, 2, '2022-11-23 08:15:00', NULL, NULL, NULL, '2022-11-23 04:26:03', 1),
+(3, 1, 3, '2022-11-23 09:30:00', NULL, NULL, NULL, '2022-11-23 17:47:34', 1),
+(4, 2, 1, '2022-11-23 08:00:00', NULL, NULL, NULL, '2022-11-23 04:26:58', 1),
+(5, 2, 2, '2022-11-23 08:15:00', NULL, NULL, NULL, '2022-11-23 04:27:13', 1),
+(6, 2, 3, '2022-11-23 09:30:00', NULL, NULL, NULL, '2022-11-23 04:27:31', 1);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `tblTasks`
+-- Table structure for table `tblTasks`
 --
 
 DROP TABLE IF EXISTS `tblTasks`;
@@ -54,14 +66,23 @@ CREATE TABLE `tblTasks` (
   `TaskId` smallint(4) UNSIGNED NOT NULL,
   `TaskType` tinyint(1) UNSIGNED NOT NULL,
   `TaskTitle` varchar(40) NOT NULL,
-  `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `CreatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `TaskStatus` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='General Tasks Table';
+
+--
+-- Dumping data for table `tblTasks`
+--
+
+INSERT INTO `tblTasks` (`TaskId`, `TaskType`, `TaskTitle`, `CreatedAt`, `TaskStatus`) VALUES
+(1, 2, 'Tender La Cama', '2022-11-21 23:34:56', 1),
+(2, 1, 'Vestirse', '2022-11-21 23:03:25', 1),
+(3, 1, 'Lavarse Los Dientes', '2022-11-21 23:12:22', 1);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `tblTasksNodes`
+-- Table structure for table `tblTasksNodes`
 --
 
 DROP TABLE IF EXISTS `tblTasksNodes`;
@@ -77,7 +98,7 @@ CREATE TABLE `tblTasksNodes` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `tblUsers`
+-- Table structure for table `tblUsers`
 --
 
 DROP TABLE IF EXISTS `tblUsers`;
@@ -96,7 +117,7 @@ CREATE TABLE `tblUsers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Users table';
 
 --
--- Volcado de datos para la tabla `tblUsers`
+-- Dumping data for table `tblUsers`
 --
 
 INSERT INTO `tblUsers` (`UserId`, `Username`, `Password`, `UserType`, `Email`, `PhoneNumber`, `FirstName`, `LastName`, `Token`, `TokenExpiryDateTime`, `UserStatus`) VALUES
@@ -105,7 +126,7 @@ INSERT INTO `tblUsers` (`UserId`, `Username`, `Password`, `UserType`, `Email`, `
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `tblUsersProfiles`
+-- Table structure for table `tblUsersProfiles`
 --
 
 DROP TABLE IF EXISTS `tblUsersProfiles`;
@@ -120,7 +141,7 @@ CREATE TABLE `tblUsersProfiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Users table';
 
 --
--- Volcado de datos para la tabla `tblUsersProfiles`
+-- Dumping data for table `tblUsersProfiles`
 --
 
 INSERT INTO `tblUsersProfiles` (`UserProfileId`, `UserId`, `FirstName`, `LastName`, `Token`, `TokenExpiryDateTime`, `UserProfileStatus`) VALUES
@@ -128,11 +149,11 @@ INSERT INTO `tblUsersProfiles` (`UserProfileId`, `UserId`, `FirstName`, `LastNam
 (2, 1, 'María', 'López', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNVEktMjAyMi0yIiwiZXhwIjoiMjAyMjExMTgxOTA1MDgiLCJqdGkiOiIyIn0.yQNZYoU8jiKjFtJfj9Fc-7c5NZYsVysnSAl2AJGIM2o', '2022-11-18 19:05:08', 1);
 
 --
--- Índices para tablas volcadas
+-- Indexes for dumped tables
 --
 
 --
--- Indices de la tabla `tblActivities`
+-- Indexes for table `tblActivities`
 --
 ALTER TABLE `tblActivities`
   ADD PRIMARY KEY (`ActivityId`),
@@ -140,13 +161,13 @@ ALTER TABLE `tblActivities`
   ADD KEY `INDEX_USERID` (`UserProfileId`);
 
 --
--- Indices de la tabla `tblTasks`
+-- Indexes for table `tblTasks`
 --
 ALTER TABLE `tblTasks`
   ADD PRIMARY KEY (`TaskId`);
 
 --
--- Indices de la tabla `tblTasksNodes`
+-- Indexes for table `tblTasksNodes`
 --
 ALTER TABLE `tblTasksNodes`
   ADD PRIMARY KEY (`TaskNodeId`),
@@ -154,7 +175,7 @@ ALTER TABLE `tblTasksNodes`
   ADD KEY `INDEX_TASKNODEFATHERID` (`TaskNodeFatherId`);
 
 --
--- Indices de la tabla `tblUsers`
+-- Indexes for table `tblUsers`
 --
 ALTER TABLE `tblUsers`
   ADD PRIMARY KEY (`UserId`),
@@ -162,65 +183,65 @@ ALTER TABLE `tblUsers`
   ADD UNIQUE KEY `UNIQUE_USER_EMAIL` (`Email`);
 
 --
--- Indices de la tabla `tblUsersProfiles`
+-- Indexes for table `tblUsersProfiles`
 --
 ALTER TABLE `tblUsersProfiles`
   ADD PRIMARY KEY (`UserProfileId`),
   ADD KEY `INDEX_USERID` (`UserId`) USING BTREE;
 
 --
--- AUTO_INCREMENT de las tablas volcadas
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT de la tabla `tblActivities`
+-- AUTO_INCREMENT for table `tblActivities`
 --
 ALTER TABLE `tblActivities`
-  MODIFY `ActivityId` mediumint(7) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `ActivityId` mediumint(7) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT de la tabla `tblTasks`
+-- AUTO_INCREMENT for table `tblTasks`
 --
 ALTER TABLE `tblTasks`
-  MODIFY `TaskId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `TaskId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT de la tabla `tblTasksNodes`
+-- AUTO_INCREMENT for table `tblTasksNodes`
 --
 ALTER TABLE `tblTasksNodes`
   MODIFY `TaskNodeId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `tblUsers`
+-- AUTO_INCREMENT for table `tblUsers`
 --
 ALTER TABLE `tblUsers`
   MODIFY `UserId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT de la tabla `tblUsersProfiles`
+-- AUTO_INCREMENT for table `tblUsersProfiles`
 --
 ALTER TABLE `tblUsersProfiles`
   MODIFY `UserProfileId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- Restricciones para tablas volcadas
+-- Constraints for dumped tables
 --
 
 --
--- Filtros para la tabla `tblActivities`
+-- Constraints for table `tblActivities`
 --
 ALTER TABLE `tblActivities`
   ADD CONSTRAINT `FK_Activities__TaskId` FOREIGN KEY (`TaskId`) REFERENCES `tblTasks` (`TaskId`) ON UPDATE CASCADE,
   ADD CONSTRAINT `FK_Activities__UserProfileId` FOREIGN KEY (`UserProfileId`) REFERENCES `tblUsersProfiles` (`UserProfileId`) ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `tblTasksNodes`
+-- Constraints for table `tblTasksNodes`
 --
 ALTER TABLE `tblTasksNodes`
   ADD CONSTRAINT `FK_TasksNodes__TaskId` FOREIGN KEY (`TaskId`) REFERENCES `tblTasks` (`TaskId`) ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `tblUsersProfiles`
+-- Constraints for table `tblUsersProfiles`
 --
 ALTER TABLE `tblUsersProfiles`
   ADD CONSTRAINT `FK_UsersProfiles__UserId` FOREIGN KEY (`UserId`) REFERENCES `tblUsers` (`UserId`) ON UPDATE CASCADE;

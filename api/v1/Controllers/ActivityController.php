@@ -100,12 +100,8 @@
             $UserProfileId = $this->requestBody['data']['UserProfileId'];
             $TaskId = $this->requestBody['data']['TaskId'];
             $ActivityDateTime = $this->requestBody['data']['ActivityDateTime'];
-            $ActivityStart = $this->requestBody['data']['ActivityStart'];
-            $ActivityEnd = $this->requestBody['data']['ActivityEnd'];
-            // Optional fields ------------------------------------------------
-            $ActivityResults = $this->requestBody['data']['ActivityResults'];
 
-            $result = $this->resourceObject->createActivity($UserProfileId, $TaskId, $ActivityDateTime, $ActivityStart, $ActivityEnd, $ActivityResults);
+            $result = $this->resourceObject->createActivity($UserProfileId, $TaskId, $ActivityDateTime);
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);

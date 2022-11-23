@@ -49,6 +49,11 @@
                 $controllerObject = new TaskController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
+            case 'activities':
+                require_once( './Controllers/ActivityController.php' );
+                $controllerObject = new ActivityController( $requestMethod, $resourceId, $queryString, $requestBody );
+                $apiResponse = $controllerObject->processRequest();
+                break;
             default:
                 $apiResponse = [
                     'statusCodeHeader' => 'HTTP/1.1 404 Not Found', 

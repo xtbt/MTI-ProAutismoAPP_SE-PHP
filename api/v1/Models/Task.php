@@ -165,14 +165,14 @@
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
                     $TaskId = $this->DB_Connector->lastInsertId(); // Get newly created record ID
-                    $this->response = [
-                        'globalCount' => 1, 
-                        'count' => 1, 
-                        'data' => ['Id' => $TaskId], // Return created ID
-                        'msj' => '['.get_class($this).'] Ok: New record created successfully'
-                    ];
+                    $this->response['globalCount'] = 1;
+                    $this->response['count'] = 1;
+                    $this->response['data'] = ['Id' => $TaskId];
+                    $this->response['msj'] = '['.get_class($this).'] Ok: New record created successfully';
                 }
                 else {
+                    $this->response['globalCount'] = 0;
+                    $this->response['count'] = 0;
                     $this->response['msj'] = '['.get_class($this).'] Error: Cannot create new record';
                 };
             }
@@ -191,8 +191,8 @@
 
             // Confirm changes on at least 1 field ----------------------------
             if ($this->TaskType == $TaskType && $this->TaskTitle == $TaskTitle) {
-                $this->response['count'] = -1;
-                $this->response['globalCount'] = -1;
+                $this->response['count'] = -2;
+                $this->response['globalCount'] = -2;
                 $this->response['data'] = ['Id' => $TaskId];
                 $this->response['msj'] = '['.get_class($this).'] Warning: No modifications made on record';
                 return $this->response; // Return 'no modification' response
@@ -213,7 +213,7 @@
                 $this->SQL_Sentence->execute();
                 
                 if ($this->SQL_Sentence->rowCount() != 0) {
-                    $this->getTask($TaskId); // Update current object data with modified info
+                    $this->getTask( $TaskId ); // Update current object data with modified info
                     $this->response['msj'] = '['.get_class($this).'] Ok: Record updated successfully';
                 }
                 else {
@@ -224,6 +224,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $TaskId];
             return $this->response; // Return response Array
         }
 
@@ -257,6 +258,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $TaskId];
             return $this->response; // Return response Array
         }
 
@@ -290,6 +292,7 @@
                 $this->response['msj'] = '['.get_class($this).'] Error: SQL Exception';
                 $this->response['error'] = $ex->getMessage();
             };
+            $this->response['data'] = ['Id' => $TaskId];
             return $this->response; // Return response Array
         }
 
