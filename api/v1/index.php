@@ -44,14 +44,19 @@
                 $controllerObject = new UserProfileController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
+            case 'activities':
+                require_once( './Controllers/ActivityController.php' );
+                $controllerObject = new ActivityController( $requestMethod, $resourceId, $queryString, $requestBody );
+                $apiResponse = $controllerObject->processRequest();
+                break;
             case 'tasks':
                 require_once( './Controllers/TaskController.php' );
                 $controllerObject = new TaskController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
-            case 'activities':
-                require_once( './Controllers/ActivityController.php' );
-                $controllerObject = new ActivityController( $requestMethod, $resourceId, $queryString, $requestBody );
+            case 'tasks-nodes':
+                require_once( './Controllers/TaskNodeController.php' );
+                $controllerObject = new TaskNodeController( $requestMethod, $resourceId, $queryString, $requestBody );
                 $apiResponse = $controllerObject->processRequest();
                 break;
             default:

@@ -6,13 +6,15 @@
         
         // Class properties
         public $TaskNodeId;
-        public $TaskNodeType;
-        public $TaskNodeTitle;
-        public $CreatedAt;
+        public $TaskId;
+        public $TaskNodeName;
+        public $TaskNodeFatherId;
+        public $TaskNodeOption;
+        public $TaskNodeDescription;
         public $TaskNodeStatus;
 
         // Search criteria fields string
-        private $SearchCriteriaFieldsString = 'CONCAT("[",COALESCE(TaskNodeId,""),"]",COALESCE(TaskNodeTitle,""))';
+        private $SearchCriteriaFieldsString = 'CONCAT("[",COALESCE(TaskNodeName,""),"]",COALESCE(TaskNodeDescription,""))';
 
         // User contructor (DB Connection)
         public function __construct() {
@@ -21,7 +23,7 @@
 
         // Init DB properties -------------------------------------------------
         private function DB_initProperties() {
-            $this->SQL_Tables = 'tblTaskNodes';
+            $this->SQL_Tables = 'tblTasksNodes';
             $this->SQL_Conditions = 'TRUE';
             $this->SQL_Order = 'TaskNodeId';
             $this->SQL_Limit = NULL;
@@ -43,9 +45,11 @@
             try {
                 $SQL_GlobalQuery = 'SELECT 
                     TaskNodeId AS TaskNodeId, 
-                    TaskNodeType AS TaskNodeType, 
-                    TaskNodeTitle AS TaskNodeTitle, 
-                    CreatedAt AS CreatedAt, 
+                    TaskId AS TaskId, 
+                    TaskNodeName AS TaskNodeName, 
+                    TaskNodeFatherId AS TaskNodeFatherId, 
+                    TaskNodeOption AS TaskNodeOption, 
+                    TaskNodeDescription AS TaskNodeDescription, 
                     TaskNodeStatus AS TaskNodeStatus 
                     FROM '
                     .$this->SQL_Tables.
@@ -103,9 +107,11 @@
             try {
                 $SQL_Query = 'SELECT 
                     TaskNodeId AS TaskNodeId, 
-                    TaskNodeType AS TaskNodeType, 
-                    TaskNodeTitle AS TaskNodeTitle, 
-                    CreatedAt AS CreatedAt, 
+                    TaskId AS TaskId, 
+                    TaskNodeName AS TaskNodeName, 
+                    TaskNodeFatherId AS TaskNodeFatherId, 
+                    TaskNodeOption AS TaskNodeOption, 
+                    TaskNodeDescription AS TaskNodeDescription, 
                     TaskNodeStatus AS TaskNodeStatus 
                     FROM '
                     .$this->SQL_Tables.
@@ -142,24 +148,29 @@
         // ********************************************************************
         // (CREATE) CREATE NEW RECORD INTO DB *********************************
         // ********************************************************************
-        public function createTaskNode($TaskNodeType, $TaskNodeTitle) {
+        public function createTaskNode( $TaskId, $TaskNodeName, $TaskNodeFatherId, $TaskNodeOption, $TaskNodeDescription ) {
             $this->DB_initProperties();
             $TaskNodeId = NULL; // NULL by default on new records
-            $CreatedAt = date('Y-m-d H:i:s');
+            $TaskNodeFatherId = !empty($TaskNodeFatherId) ? $TaskNodeFatherId : NULL;
+            $TaskNodeOption = !empty($TaskNodeOption) ? $TaskNodeOption : NULL;
             $TaskNodeStatus = 1; // 1(Active) by default on new records
             try {
-                $SQL_Query = 'INSERT INTO tblTaskNodes VALUES (
+                $SQL_Query = 'INSERT INTO tblTasksNodes VALUES (
                     :TaskNodeId, 
-                    :TaskNodeType, 
-                    :TaskNodeTitle, 
-                    :CreatedAt, 
+                    :TaskId, 
+                    :TaskNodeName, 
+                    :TaskNodeFatherId, 
+                    :TaskNodeOption, 
+                    :TaskNodeDescription, 
                     :TaskNodeStatus)';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
                 $this->SQL_Sentence->bindParam(':TaskNodeId', $TaskNodeId, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':TaskNodeType', $TaskNodeType, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':TaskNodeTitle', $TaskNodeTitle, PDO::PARAM_STR);
-                $this->SQL_Sentence->bindParam(':CreatedAt', $CreatedAt, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskNodeName', $TaskNodeName, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskNodeFatherId', $TaskNodeFatherId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskNodeOption', $TaskNodeOption, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskNodeDescription', $TaskNodeDescription, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':TaskNodeStatus', $TaskNodeStatus, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
@@ -186,11 +197,13 @@
         // ********************************************************************
         // (UPDATE) UPDATE RECORD ON DB ***************************************
         // ********************************************************************
-        public function updateTaskNode($TaskNodeId, $TaskNodeType, $TaskNodeTitle) {
+        public function updateTaskNode( $TaskNodeId, $TaskId, $TaskNodeName, $TaskNodeFatherId, $TaskNodeOption, $TaskNodeDescription ) {
             $this->getTaskNode($TaskNodeId); // Get current record data from DB
 
             // Confirm changes on at least 1 field ----------------------------
-            if ($this->TaskNodeType == $TaskNodeType && $this->TaskNodeTitle == $TaskNodeTitle) {
+            if ($this->TaskId == $TaskId && $this->TaskNodeName == $TaskNodeName
+            && $this->TaskNodeFatherId == $TaskNodeFatherId && $this->TaskNodeOption == $TaskNodeOption
+            && $this->TaskNodeDescription == $TaskNodeDescription) {
                 $this->response['count'] = -2;
                 $this->response['globalCount'] = -2;
                 $this->response['data'] = ['Id' => $TaskNodeId];
@@ -200,15 +213,21 @@
             // ----------------------------------------------------------------
 
             try {
-                $SQL_Query = 'UPDATE tblTaskNodes SET 
-                    TaskNodeType = :TaskNodeType, 
-                    TaskNodeTitle = :TaskNodeTitle 
+                $SQL_Query = 'UPDATE tblTasksNodes SET 
+                    TaskId = :TaskId, 
+                    TaskNodeName = :TaskNodeName, 
+                    TaskNodeFatherId = :TaskNodeFatherId, 
+                    TaskNodeOption = :TaskNodeOption, 
+                    TaskNodeDescription = :TaskNodeDescription 
                     WHERE 
                     TaskNodeId = :TaskNodeId';
                   
                 $this->SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
-                $this->SQL_Sentence->bindParam(':TaskNodeType', $TaskNodeType, PDO::PARAM_INT);
-                $this->SQL_Sentence->bindParam(':TaskNodeTitle', $TaskNodeTitle, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskId', $TaskId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskNodeName', $TaskNodeName, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskNodeFatherId', $TaskNodeFatherId, PDO::PARAM_INT);
+                $this->SQL_Sentence->bindParam(':TaskNodeOption', $TaskNodeOption, PDO::PARAM_STR);
+                $this->SQL_Sentence->bindParam(':TaskNodeDescription', $TaskNodeDescription, PDO::PARAM_STR);
                 $this->SQL_Sentence->bindParam(':TaskNodeId', $TaskNodeId, PDO::PARAM_INT);
                 $this->SQL_Sentence->execute();
                 
@@ -236,7 +255,7 @@
             $TaskNodeStatus = 1; // Default active status (1)
 
             try {
-                $SQL_Query = 'UPDATE tblTaskNodes SET 
+                $SQL_Query = 'UPDATE tblTasksNodes SET 
                     TaskNodeStatus = :TaskNodeStatus 
                     WHERE 
                     TaskNodeId = :TaskNodeId';
@@ -270,7 +289,7 @@
             $TaskNodeStatus = 0; // Default inactive status (0)
 
             try {
-                $SQL_Query = 'UPDATE tblTaskNodes SET 
+                $SQL_Query = 'UPDATE tblTasksNodes SET 
                     TaskNodeStatus = :TaskNodeStatus 
                     WHERE 
                     TaskNodeId = :TaskNodeId';

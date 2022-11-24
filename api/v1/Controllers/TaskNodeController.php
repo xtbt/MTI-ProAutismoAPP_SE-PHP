@@ -95,6 +95,7 @@
             if (!isset( $this->requestBody['data']['TaskId'] )
             || !isset( $this->requestBody['data']['TaskNodeName'])
             || !isset( $this->requestBody['data']['TaskNodeFatherId'])
+            || !isset( $this->requestBody['data']['TaskNodeOption'])
             || !isset( $this->requestBody['data']['TaskNodeDescription']))
                 return $this->notAcceptableResponse('Missing parameters');
             
@@ -102,9 +103,10 @@
             $TaskId = $this->requestBody['data']['TaskId'];
             $TaskNodeName = $this->requestBody['data']['TaskNodeName'];
             $TaskNodeFatherId = $this->requestBody['data']['TaskNodeFatherId'];
+            $TaskNodeOption = $this->requestBody['data']['TaskNodeOption'];
             $TaskNodeDescription = $this->requestBody['data']['TaskNodeDescription'];
             
-            $result = $this->resourceObject->createTaskNode( $TaskId, $TaskNodeName, $TaskNodeFatherId, $TaskNodeDescription );
+            $result = $this->resourceObject->createTaskNode( $TaskId, $TaskNodeName, $TaskNodeFatherId, $TaskNodeOption, $TaskNodeDescription );
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
@@ -117,17 +119,23 @@
             // DEBUG ***********
             //return $this->debugResponse($this->requestBody);
             // DEBUG ***********
-            if (!isset( $this->requestBody['data']['TaskNodeId'] ) 
-            || !isset( $this->requestBody['data']['TaskId'] ) 
-            || !isset( $this->requestBody['data']['TaskNodeName']) )
+            if (!isset( $this->requestBody['data']['TaskNodeId'] )
+            || !isset( $this->requestBody['data']['TaskId'])
+            || !isset( $this->requestBody['data']['TaskNodeName'])
+            || !isset( $this->requestBody['data']['TaskNodeFatherId'])
+            || !isset( $this->requestBody['data']['TaskNodeOption'])
+            || !isset( $this->requestBody['data']['TaskNodeDescription']))
                 return $this->notAcceptableResponse('Missing parameters');
             
             // Required fields ------------------------------------------------
             $TaskNodeId = $this->requestBody['data']['TaskNodeId'];
             $TaskId = $this->requestBody['data']['TaskId'];
             $TaskNodeName = $this->requestBody['data']['TaskNodeName'];
+            $TaskNodeFatherId = $this->requestBody['data']['TaskNodeFatherId'];
+            $TaskNodeOption = $this->requestBody['data']['TaskNodeOption'];
+            $TaskNodeDescription = $this->requestBody['data']['TaskNodeDescription'];
 
-            $result = $this->resourceObject->updateTaskNode( $TaskNodeId, $TaskId, $TaskNodeName );
+            $result = $this->resourceObject->updateTaskNode( $TaskNodeId, $TaskId, $TaskNodeName, $TaskNodeFatherId, $TaskNodeOption, $TaskNodeDescription );
 
             if ( $result['count'] < 1 ) {
                 return $this->unprocessableEntityResponse($result);
