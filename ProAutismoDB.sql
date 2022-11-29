@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:8889
--- Generation Time: Nov 23, 2022 at 06:10 PM
+-- Generation Time: Nov 29, 2022 at 05:21 PM
 -- Server version: 5.7.32
 -- PHP Version: 7.4.16
 
@@ -50,7 +50,7 @@ CREATE TABLE `tblActivities` (
 INSERT INTO `tblActivities` (`ActivityId`, `UserProfileId`, `TaskId`, `ActivityDateTime`, `ActivityStart`, `ActivityEnd`, `ActivityResults`, `CreatedAt`, `ActivityStatus`) VALUES
 (1, 1, 1, '2022-11-23 08:00:00', NULL, NULL, NULL, '2022-11-23 18:05:07', 1),
 (2, 1, 2, '2022-11-23 08:15:00', NULL, NULL, NULL, '2022-11-23 04:26:03', 1),
-(3, 1, 3, '2022-11-23 09:30:00', NULL, NULL, NULL, '2022-11-23 17:47:34', 1),
+(3, 1, 3, '2022-11-29 09:30:00', NULL, NULL, NULL, '2022-11-29 17:12:50', 1),
 (4, 2, 1, '2022-11-23 08:00:00', NULL, NULL, NULL, '2022-11-23 04:26:58', 1),
 (5, 2, 2, '2022-11-23 08:15:00', NULL, NULL, NULL, '2022-11-23 04:27:13', 1),
 (6, 2, 3, '2022-11-23 09:30:00', NULL, NULL, NULL, '2022-11-23 04:27:31', 1);
@@ -91,9 +91,35 @@ CREATE TABLE `tblTasksNodes` (
   `TaskId` smallint(4) UNSIGNED NOT NULL,
   `TaskNodeName` varchar(10) NOT NULL,
   `TaskNodeFatherId` smallint(4) UNSIGNED DEFAULT NULL,
+  `TaskNodeOption` varchar(50) DEFAULT NULL,
   `TaskNodeDescription` varchar(50) NOT NULL,
   `TaskNodeStatus` tinyint(1) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Tasks Nodes Table';
+
+--
+-- Dumping data for table `tblTasksNodes`
+--
+
+INSERT INTO `tblTasksNodes` (`TaskNodeId`, `TaskId`, `TaskNodeName`, `TaskNodeFatherId`, `TaskNodeOption`, `TaskNodeDescription`, `TaskNodeStatus`) VALUES
+(1, 1, '1', NULL, NULL, 'Pongamos la sábana', 1),
+(2, 1, '2A', 1, 'Pone la sábana', 'Pongamos la cobija', 1),
+(3, 1, '2B', 1, 'Pone la cobija', 'Pongamos la colcha', 1),
+(4, 1, '2C', 1, 'Juega con la pelota', '[FINAL MALO]', 1),
+(5, 1, '3AA', 2, 'Pone la cobija', 'Pongamos la colcha', 1),
+(6, 1, '3AB', 2, 'Pone la almohada', '[FINAL REGULAR]', 1),
+(7, 1, '3AC', 2, 'Juega con el osito de peluche', '[FINAL MALO]', 1),
+(8, 1, '4AAA', 5, 'Se pone la colcha', 'Pongamos la almohada', 1),
+(9, 1, '4AAB', 5, 'Se pone la almohada', '[FINAL REGULAR]', 1),
+(10, 1, '4AAC', 5, 'Juega con el robot de juguete', '[FINAL MALO]', 1),
+(11, 1, '5AAAA', 8, 'Pone la almohada', '[FINAL BUENO]', 1),
+(12, 1, '5AAAB', 8, 'Juega con la pelota', '[FINAL MALO]', 1),
+(13, 1, '5AAAC', 8, 'Juega con el osito de peluche', '[FINAL MALO]', 1),
+(14, 1, '3BA', 3, 'Pone la colcha', 'Pongamos la almohada', 1),
+(15, 1, '3BB', 3, 'Pone la almohada', '[FINAL REGULAR]', 1),
+(16, 1, '3BC', 3, 'Juega con el robot de juguete', '[FINAL MALO]', 1),
+(17, 1, '4BAA', 14, 'Pone la almohada', '[FINAL REGULAR]', 1),
+(18, 1, '4BAB', 14, 'Juega con la pelota', '[FINAL MALO]', 1),
+(19, 1, '4BAC', 14, 'Juega con el dinosaurio de juguete', '[FINAL MALO]', 1);
 
 -- --------------------------------------------------------
 
@@ -209,7 +235,7 @@ ALTER TABLE `tblTasks`
 -- AUTO_INCREMENT for table `tblTasksNodes`
 --
 ALTER TABLE `tblTasksNodes`
-  MODIFY `TaskNodeId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `TaskNodeId` smallint(4) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `tblUsers`

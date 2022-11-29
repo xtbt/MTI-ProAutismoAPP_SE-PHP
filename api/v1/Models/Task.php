@@ -125,6 +125,9 @@
 
                 // If there is data, we build the response with DB info -------
                 $this->response['data'][$TaskId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
+                // Temporal implementation of the image *******************
+                $this->response['data'][$TaskId]['TaskImage'] = ROOT_URL.'/assets/images/tasks/' . $TaskId . '.png';
+                // Temporal implementation of the image *******************
                 $this->updateProperties($this->response['data'][$TaskId]);
                 $this->response['globalCount'] = 1; // Unique record
                 $this->response['count'] = 1; // Unique record

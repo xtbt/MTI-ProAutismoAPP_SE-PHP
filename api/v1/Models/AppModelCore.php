@@ -51,8 +51,12 @@
                     // BEGIN: Step 2 - Load SQL conditions ----------------------------
                     if (isset($SQLCriteria['conditions'])) {
                         foreach ($SQLCriteria['conditions'] AS $identifier => $condition) {
-                            $this->SQL_Params[':'.$identifier] = $condition['value'];
-                            $this->SQL_Conditions .= ' '.$condition['type'].(isset($condition['begingroup']) ? ' (' : ' ').$condition['field'].' '.$condition['operator'].' :'.$identifier.(isset($condition['finishgroup']) ? ')' : '');
+                            if ($condition['value'] === 'NULL') {
+                                $this->SQL_Conditions .= ' '.$condition['type'].(isset($condition['begingroup']) ? ' (' : ' ').$condition['field'].' '.'IS NULL'.(isset($condition['finishgroup']) ? ')' : '');
+                            } else {
+                                $this->SQL_Params[':'.$identifier] = $condition['value'];
+                                $this->SQL_Conditions .= ' '.$condition['type'].(isset($condition['begingroup']) ? ' (' : ' ').$condition['field'].' '.$condition['operator'].' :'.$identifier.(isset($condition['finishgroup']) ? ')' : '');
+                            };
                         };
                     };
                     // END: Step 2 - Load SQL conditions ------------------------------
@@ -80,9 +84,11 @@
                 while ($row_array = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC)) {
                     // Temporal implementation of the image *******************
                     if ($className == 'UserProfile')
-                        $row_array['UserProfileImage'] = 'https://ip20soft.tech/MTI-ProAutismoAPP_SE-PHP/assets/images/userprofiles/' . $row_array['UserProfileId'] . '.png';
+                        $row_array['UserProfileImage'] = ROOT_URL.'/assets/images/users-profiles/' . $row_array['UserProfileId'] . '.png';
                     if ($className == 'Task')
-                        $row_array['TaskImage'] = 'https://ip20soft.tech/MTI-ProAutismoAPP_SE-PHP/assets/images/tasks/' . $row_array['TaskId'] . '.png';
+                        $row_array['TaskImage'] = ROOT_URL.'/assets/images/tasks/' . $row_array['TaskId'] . '.png';
+                    if ($className == 'TaskNode')
+                        $row_array['TaskNodeImage'] = ROOT_URL.'/assets/images/tasks-nodes/' . $row_array['TaskNodeId'] . '.png';
                     // Temporal implementation of the image *******************
                     $this->response['data'][] = $row_array;
                 };

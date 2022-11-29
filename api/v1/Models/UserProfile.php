@@ -127,6 +127,9 @@
 
                 // If there is data, we build the response with DB info -------
                 $this->response['data'][$UserProfileId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
+                // Temporal implementation of the image *******************
+                $this->response['data'][$UserProfileId]['UserProfileImage'] = ROOT_URL.'/assets/images/users-profiles/' . $UserProfileId . '.png';
+                // Temporal implementation of the image *******************
                 $this->updateProperties($this->response['data'][$UserProfileId]);
                 $this->response['count'] = 1; // Unique record
                 $this->response['globalCount'] = 1;

@@ -80,6 +80,60 @@
             };
         }
 
+        // ####################################################################
+        // ####################################################################
+        // ####################################################################
+        // SPECIAL METHOD TO GET TASK NODE OPTIONS ############################
+        public function getTaskNodeOptions($TaskNodeFatherId) {
+            if (is_numeric($TaskNodeFatherId)) {
+                $SQL_Conditions = 'TaskNodeFatherId = :TaskNodeFatherId';
+            }
+            else {
+                $this->response['options'] = ['error' => '['.get_class($this).'] Error: Invalid parameter'];
+                return false;
+            };
+            
+            try {
+                $SQL_Query = 'SELECT 
+                    TaskNodeId AS TaskNodeId, 
+                    TaskId AS TaskId, 
+                    TaskNodeName AS TaskNodeName, 
+                    TaskNodeFatherId AS TaskNodeFatherId, 
+                    TaskNodeOption AS TaskNodeOption 
+                    FROM '
+                    .$this->SQL_Tables.
+                    ' WHERE '
+                    .$SQL_Conditions;
+                
+                $SQL_Sentence = $this->DB_Connector->prepare($SQL_Query);
+                $SQL_Sentence->bindParam(':TaskNodeFatherId', $TaskNodeFatherId, PDO::PARAM_INT);
+                $SQL_Sentence->execute();
+                if ($SQL_Sentence->rowCount() < 1) {
+                    $this->response['options'] = ['gameOver' => true];
+                    return true;
+                };
+
+                // If there is data, we build the response with DB info -------
+                while ($row_array = $SQL_Sentence->fetch(PDO::FETCH_ASSOC)) {
+                    // Temporal implementation of the image *******************
+                    $row_array['TaskNodeImage'] = 'https://ip20soft.tech/MTI-ProAutismoAPP_SE-PHP/assets/images/tasks-nodes/' . $row_array['TaskNodeId'] . '.png';
+                    // Temporal implementation of the image *******************
+                    $this->response['options'][] = $row_array;
+                };
+                // ------------------------------------------------------------
+                return true;
+            }
+            catch (PDOException $ex) {
+                $this->response['options']['msj'] = '['.get_class($this).'] Error: SQL Exception';
+                $this->response['options']['error'] = $ex->getMessage();
+                return false;
+            };
+        }
+        // SPECIAL METHOD TO GET TASK NODE OPTIONS ############################
+        // ####################################################################
+        // ####################################################################
+        // ####################################################################
+
         // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
         // CRUD FUNCTIONS START ***********************************************
         
@@ -131,6 +185,12 @@
 
                 // If there is data, we build the response with DB info -------
                 $this->response['data'][$TaskNodeId] = $this->SQL_Sentence->fetch(PDO::FETCH_ASSOC);
+                // Temporal implementation of the image *******************
+                $this->response['data'][$TaskNodeId]['TaskNodeImage'] = ROOT_URL.'/assets/images/tasks-nodes/' . $TaskNodeId . '.png';
+                // Temporal implementation of the image *******************
+                // GET TASK NODE OPTIONS ######################################
+                $this->getTaskNodeOptions($TaskNodeId);
+                // GET TASK NODE OPTIONS ######################################
                 $this->updateProperties($this->response['data'][$TaskNodeId]);
                 $this->response['globalCount'] = 1; // Unique record
                 $this->response['count'] = 1; // Unique record

@@ -17,7 +17,7 @@
         public $ActivityStatus;
 
         // Search criteria fields string
-        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(TaskTitle,""),"|",COALESCE(ActivityResults,""))';
+        private $SearchCriteriaFieldsString = 'CONCAT(COALESCE(TaskTitle,""),"|",COALESCE(ActivityDateTime,""),"|",COALESCE(ActivityResults,""))';
 
         // User contructor (DB Connection)
         public function __construct() {
